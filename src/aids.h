@@ -1,0 +1,32 @@
+#ifndef AIDS_H
+#define AIDS_H
+#include <stdio.h>
+#include <stdlib.h>
+
+#ifdef DEBUG
+#define DEBUG_TEST 1
+#else
+#define DEBUG_TEST 0
+#endif
+
+#define DEBUG_PRINT(fmt, ...) \
+        if (DEBUG_TEST) { \
+            fprintf(stderr, "-----DEBUG----> %s:%d:%s(): " fmt "\n\n", __FILE__, \
+                                __LINE__, __func__, __VA_ARGS__); \
+            fflush(stderr); \
+        }
+
+#define PANIC(msg) \
+    perror(msg); \
+    exit(-1);
+
+typedef struct Kyle {
+    const char *data;
+    const size_t length;
+} Kyle;
+
+Kyle kyle_from_file(const char *path);
+
+void kyle_destroy(Kyle kyle);
+#endif
+
