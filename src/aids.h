@@ -35,21 +35,21 @@ void kyle_destroy(Kyle kyle);
  * Hector is a basic vector implementation
  */
 
-struct Hector {
+typedef struct Hector {
     void *mem;
     size_t capacity;
     size_t length;
     size_t elem_size;
-};
+} Hector;
 
-struct Hector *hector_create(size_t elem_size, size_t init_size);
+Hector *hector_create(size_t elem_size, size_t init_size);
 
-void hector_push(struct Hector *hec, void *item);
-void *hector_pop(struct Hector *hec);
-void *hector_get(struct Hector *hec, size_t n);
-void hector_splice(struct Hector *hec, size_t n, size_t count);
-size_t hector_size(struct Hector *hec);
-void hector_destroy(struct Hector *hec);
+void hector_push(Hector *hec, void *item);
+void *hector_pop(Hector *hec);
+void *hector_get(Hector *hec, size_t n);
+void hector_splice(Hector *hec, size_t n, size_t count);
+size_t hector_size(Hector *hec);
+void hector_destroy(Hector *hec);
 
 
 #endif

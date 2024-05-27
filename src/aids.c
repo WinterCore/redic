@@ -39,8 +39,8 @@ void kyle_destroy(Kyle kyle) {
 
 
 
-struct Hector *hector_create(size_t elem_size, size_t init_size) {
-    struct Hector *hector = (struct Hector*) malloc(sizeof(struct Hector));
+Hector *hector_create(size_t elem_size, size_t init_size) {
+    Hector *hector = (Hector*) malloc(sizeof(Hector));
     hector->elem_size = elem_size;
     hector->length = 0;
     hector->capacity = init_size;
@@ -51,7 +51,7 @@ struct Hector *hector_create(size_t elem_size, size_t init_size) {
 }
 
 
-void hector_push(struct Hector *hec, void *item) {
+void hector_push(Hector *hec, void *item) {
     if (hec->capacity == hec->length) {
         int new_capacity = hec->capacity * 2;
         hec->mem = realloc(hec->mem, new_capacity * hec->elem_size);
@@ -66,7 +66,7 @@ void hector_push(struct Hector *hec, void *item) {
     hec->length += 1;
 }
 
-void try_shrink(struct Hector *hec) {
+void try_shrink(Hector *hec) {
     if (hec->length < hec->capacity / 3) {
         int new_capacity = hec->capacity / 2;
         hec->mem = realloc(hec->mem, new_capacity * hec->elem_size);
@@ -74,7 +74,7 @@ void try_shrink(struct Hector *hec) {
     }
 }
 
-void *hector_pop(struct Hector *hec) {
+void *hector_pop(Hector *hec) {
     void *value = hector_get(hec, hec->length - 1);
     hec->length -= 1;
     try_shrink(hec);
@@ -82,7 +82,7 @@ void *hector_pop(struct Hector *hec) {
     return value;
 }
 
-void hector_splice(struct Hector *hec, size_t n, size_t count) {
+void hector_splice(Hector *hec, size_t n, size_t count) {
     if (n + count > hec->capacity || count == 0) {
         return;
     }
@@ -100,15 +100,15 @@ void hector_splice(struct Hector *hec, size_t n, size_t count) {
     try_shrink(hec);
 }
 
-void *hector_get(struct Hector *hec, size_t n) {
+void *hector_get(Hector *hec, size_t n) {
     return *(void **)(hec->mem + (hec->elem_size * n));
 }
 
-size_t hector_size(struct Hector *hec) {
+size_t hector_size(Hector *hec) {
     return hec->length;
 }
 
-void hector_destroy(struct Hector *hec) {
+void hector_destroy(Hector *hec) {
     free(hec->mem);
     free(hec);
 }

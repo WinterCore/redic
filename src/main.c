@@ -1,3 +1,6 @@
+#define DEBUG
+
+#include <stdint.h>
 #include <stdio.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -5,16 +8,27 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-
-#define DEBUG
-
-#include "aids.h"
+#include "./aids.h"
+#include "./resp/resp.h"
 
 
 #define CONNECTION_QUEUE_SIZE 1
 
+void test() {
+    char *input = "+OK\r\n";
+
+    RESPValue value = {};
+    
+    RESPParseResult result = resp_parse_input(input, &value);   
+
+    DEBUG_PRINT("VALUE KIND: %s", ((RESPSimpleString *) value.value)->string);
+}
+
 int main() {
+    test();
+    
     int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+    uint16_t port = 6379;
 
     if (socket_fd < 0) {
         PANIC("Failed to create server socket");
@@ -35,7 +49,7 @@ int main() {
     
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    server_addr.sin_port = htons(6379);
+    server_addr.sin_port = htons(port);
 
     int bind_result = bind(
         socket_fd,
@@ -48,6 +62,9 @@ int main() {
     }
 
     int listen_result = listen(socket_fd, CONNECTION_QUEUE_SIZE);
+
+    printf("Server is up and running on port %hu", port);
+    fflush(stdout);
 
     if (listen_result < 0) {
         PANIC("Failed to listen");
