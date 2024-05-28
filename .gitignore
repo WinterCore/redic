@@ -2,3 +2,4 @@ Redic
 .DS_Store
 *.o
 .cache
+*.dSYM

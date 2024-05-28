@@ -5,7 +5,7 @@ CFLAGS = -std=c11 -Wall -Wextra
 
 all: executable
 
-debug: CFLAGS += -ggdb
+debug: CFLAGS += -ggdb -DDEBUG
 debug: executable
 
 release: CFLAGS += -DNDEBUG
@@ -19,7 +19,6 @@ src/resp/resp.o: src/resp/resp.h src/resp/resp.c src/aids.o
 
 Redic: src/main.c src/aids.o src/resp/resp.o
 	cc $(CFLAGS) -o Redic src/main.c src/aids.o src/resp/resp.o $(LDFLAGS)
-
 
 executable: Redic
 	./Redic

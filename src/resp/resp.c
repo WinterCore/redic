@@ -3,6 +3,13 @@
 
 #include "./resp.h"
 
+#define CONSUME_TOKEN(TOKEN, STR_PTR, POS) \
+    if (*STR_PTR != TOKEN) { \
+        return (RESPParseResult) { .code = RESP_PARSE_UNEXPECTED_TOKEN, .pos = *POS }; \
+    } \
+    STR_PTR += 1; \
+    *POS += 1
+    
 
 typedef struct RESPParser {
     char *input;
@@ -12,17 +19,16 @@ typedef struct RESPParser {
 static RESPParseResult parse_simple_string(RESPParser *parser, RESPSimpleString *simple_string) {
     RESPParseResult result = { .code = RESP_PARSE_SUCCESS, .pos = parser->pos };
 
-    // TODO: make sure that the input starts with the simple string marker
-    size_t pos = parser->pos + 1;
-
+    size_t pos = parser->pos;
     char *str_ptr = &parser->input[pos];
-    DEBUG_PRINT("-hi %c", *str_ptr);
+
+    CONSUME_TOKEN(RESP_SIMPLE_STRING, str_ptr, &pos);
+
     size_t str_len = 0;
 
     while (*str_ptr != '\r' && *str_ptr != '\n') {
         str_len += 1;
         str_ptr += 1;
-        DEBUG_PRINT("-hi %c", *str_ptr);
     }
 
     char *value = malloc(str_len * sizeof(char) + 1);
@@ -33,17 +39,15 @@ static RESPParseResult parse_simple_string(RESPParser *parser, RESPSimpleString 
         return result;
     }
     
-    memcpy(value, str_ptr, str_len);
+    memcpy(value, &parser->input[pos], str_len);
 
     value[str_len * sizeof(char)] = '\0';
-
     simple_string->string = value;
-    
 
     pos += str_len;
 
-    // TODO: Validate that input actually contains \r\n right after the value
-    pos += 2;
+    CONSUME_TOKEN('\r', str_ptr, &pos);
+    CONSUME_TOKEN('\n', str_ptr, &pos);
 
     parser->pos = pos;
 
@@ -65,7 +69,7 @@ static RESPParseResult parse_integer(RESPParser *parser, RESPInteger *integer) {
 }
 
 static RESPParseResult resp_parse_value(RESPParser *parser, RESPValue *value) {
-    DEBUG_PRINT("wotwot%c", *parser->input)
+    DEBUG_PRINT("wotwot%s", parser->input)
 
     switch (*parser->input) {
         case RESP_INTEGER: {
@@ -129,8 +133,6 @@ RESPParseResult resp_parse_input(char *input, RESPValue *value) {
         .input = input,
         .pos = 0,
     };
-    printf("Inside parse input");
-    fflush(stdout);
 
     DEBUG_PRINT("HELLO %s", "");
 

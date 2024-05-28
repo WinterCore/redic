@@ -1,5 +1,3 @@
-#define DEBUG
-
 #include <stdint.h>
 #include <stdio.h>
 #include <netinet/in.h>
@@ -27,6 +25,7 @@ void test() {
 int main() {
     test();
     
+    /*
     int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
     uint16_t port = 6379;
 
@@ -126,6 +125,7 @@ int main() {
             DEBUG_PRINT("Read %ld bytes", bytes_read);
         }
     }
+    */
 
     return 0;
 }
