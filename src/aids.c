@@ -40,6 +40,7 @@ void kyle_destroy(Kyle kyle) {
 
 
 Hector *hector_create(size_t elem_size, size_t init_size) {
+    // TODO: Check for malloc errors
     Hector *hector = (Hector*) malloc(sizeof(Hector));
     hector->elem_size = elem_size;
     hector->length = 0;

@@ -13,13 +13,14 @@
 #define CONNECTION_QUEUE_SIZE 1
 
 void test() {
-    char *input = "+OK\r\n";
+    char *input = "_\r\n";
 
     RESPValue value = {};
     
     RESPParseResult result = resp_parse_input(input, &value);   
+    DEBUG_PRINT("RESULT: %d", result.code);
 
-    DEBUG_PRINT("VALUE KIND: %s", ((RESPSimpleString *) value.value)->string);
+    DEBUG_PRINT("VALUE KIND: %d", value.kind == '_');
 }
 
 int main() {

@@ -16,6 +16,10 @@
             fflush(stderr); \
         }
 
+#define UNIMPLEMENTED(fmt, ...) \
+    printf("-----UNIMPLEMENTED---->: %s:%d:%s: " fmt "\n\n", __FILE__, __LINE__, __func__, __VA_ARGS__); \
+    fflush(stderr);
+
 #define PANIC(msg) \
     perror(msg); \
     exit(-1);
@@ -36,10 +40,10 @@ void kyle_destroy(Kyle kyle);
  */
 
 typedef struct Hector {
-    void *mem;
     size_t capacity;
     size_t length;
     size_t elem_size;
+    void *mem;
 } Hector;
 
 Hector *hector_create(size_t elem_size, size_t init_size);

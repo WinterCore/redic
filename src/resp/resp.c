@@ -8,27 +8,29 @@
         return (RESPParseResult) { .code = RESP_PARSE_UNEXPECTED_TOKEN, .pos = *POS }; \
     } \
     STR_PTR += 1; \
-    *POS += 1
-    
+    *POS += 1    
 
 typedef struct RESPParser {
     char *input;
     size_t pos;
 } RESPParser;
 
+static RESPParseResult resp_parse_value(RESPParser *parser, RESPValue *value);
+void destroy_value(RESPValue *value);
+
 static RESPParseResult parse_simple_string(RESPParser *parser, RESPSimpleString *simple_string) {
     RESPParseResult result = { .code = RESP_PARSE_SUCCESS, .pos = parser->pos };
 
     size_t pos = parser->pos;
-    char *str_ptr = &parser->input[pos];
+    char *ptr = &parser->input[pos];
 
-    CONSUME_TOKEN(RESP_SIMPLE_STRING, str_ptr, &pos);
+    CONSUME_TOKEN(RESP_SIMPLE_STRING, ptr, &pos);
 
     size_t str_len = 0;
 
-    while (*str_ptr != '\r' && *str_ptr != '\n') {
+    while (*ptr != '\r' && *ptr != '\n') {
         str_len += 1;
-        str_ptr += 1;
+        ptr += 1;
     }
 
     char *value = malloc(str_len * sizeof(char) + 1);
@@ -46,31 +48,146 @@ static RESPParseResult parse_simple_string(RESPParser *parser, RESPSimpleString 
 
     pos += str_len;
 
-    CONSUME_TOKEN('\r', str_ptr, &pos);
-    CONSUME_TOKEN('\n', str_ptr, &pos);
+    CONSUME_TOKEN('\r', ptr, &pos);
+    CONSUME_TOKEN('\n', ptr, &pos);
 
     parser->pos = pos;
 
     return result;
 }
 
+void destroy_simple_string(RESPSimpleString *simple_string) {
+    free(simple_string->string);
+}
+
 static RESPParseResult parse_integer(RESPParser *parser, RESPInteger *integer) {
     RESPParseResult result = { .code = RESP_PARSE_SUCCESS, .pos = parser->pos };
 
+    size_t pos = parser->pos;
     char *ptr = &parser->input[parser->pos];
 
-    char **end_ptr = NULL;
-    int64_t value = strtoll(&parser->input[parser->pos], end_ptr, 10);
+    CONSUME_TOKEN(RESP_INTEGER, ptr, &pos);
+
+    char *end_ptr = NULL;
+    int64_t value = strtoll(ptr, &end_ptr, 10);
 
     integer->value = value;
-    parser->pos += (ptr - *end_ptr) + 2;
+    pos += (end_ptr - ptr);
+    ptr += (end_ptr - ptr);
+
+    CONSUME_TOKEN('\r', ptr, &pos);
+    CONSUME_TOKEN('\n', ptr, &pos);
+
+    parser->pos = pos;
 
     return result;
 }
 
-static RESPParseResult resp_parse_value(RESPParser *parser, RESPValue *value) {
-    DEBUG_PRINT("wotwot%s", parser->input)
+void destroy_integer(RESPInteger *integer) {
+    // noop
+}
 
+static RESPParseResult parse_null(RESPParser *parser, RESPNull *null) {
+    RESPParseResult result = { .code = RESP_PARSE_SUCCESS, .pos = parser->pos };
+    char *ptr = &parser->input[parser->pos];
+    size_t pos = parser->pos;
+
+    CONSUME_TOKEN('_', ptr, &pos);
+    CONSUME_TOKEN('\r', ptr, &pos);
+    CONSUME_TOKEN('\n', ptr, &pos);
+
+    parser->pos = pos;
+
+    return result;
+}
+
+void destroy_null(RESPNull *null) {
+    // noop
+}
+
+static RESPParseResult parse_array(RESPParser *parser, RESPArray *array) {
+    RESPParseResult result = { .code = RESP_PARSE_SUCCESS, .pos = parser->pos };
+
+    char *ptr = &parser->input[parser->pos];
+    size_t pos = parser->pos;
+
+    CONSUME_TOKEN(RESP_ARRAY, ptr, &pos);
+
+    char *end_ptr = NULL;
+    size_t length = strtoull(ptr, &end_ptr, 10);
+
+    pos += (end_ptr - ptr);
+    ptr += (end_ptr - ptr);
+
+    CONSUME_TOKEN('\r', ptr, &pos);
+    CONSUME_TOKEN('\n', ptr, &pos);
+
+    parser->pos = pos;
+
+    Hector *hector = hector_create(sizeof(RESPValue), length);
+
+    while (length > 0) {
+        RESPValue *array_elem = malloc(sizeof(RESPValue));
+
+        RESPParseResult result = resp_parse_value(parser, array_elem);
+
+        if (result.code != RESP_PARSE_SUCCESS) {
+            return result;
+        }
+
+        hector_push(hector, array_elem);
+
+        length -= 1;
+    }
+
+    array->array = hector;
+
+    return result;
+}
+
+void destroy_array(RESPArray *array) {
+    Hector *hector = array->array;
+
+    // Destroy all the values recursively
+    for (size_t i = 0; i < hector->length; i += 1) {
+        RESPValue *value = hector_get(hector, i);
+        destroy_value(value);
+    }
+
+    // Destroy the vector
+    hector_destroy(hector);
+}
+
+
+void destroy_value(RESPValue *value) {
+    switch (value->kind) {
+        case RESP_INTEGER: {
+            destroy_integer(value->value);
+            break;
+        }
+
+        case RESP_SIMPLE_STRING: {
+            destroy_simple_string(value->value);
+            break;
+        }
+
+        case RESP_NULL: {
+            destroy_null(value->value);
+            break;
+        }
+
+        case RESP_ARRAY: {
+            destroy_array(value->value);
+            break;
+        }
+
+        default: {
+            UNIMPLEMENTED("destructor for %d", value->kind);
+        }
+    }
+}
+
+static RESPParseResult resp_parse_value(RESPParser *parser, RESPValue *value) {
     switch (*parser->input) {
         case RESP_INTEGER: {
             RESPInteger *integer = malloc(sizeof(RESPInteger));
@@ -114,12 +231,14 @@ static RESPParseResult resp_parse_value(RESPParser *parser, RESPValue *value) {
                 return (RESPParseResult) { .code = RESP_PARSE_MEMORY_ALLOC_FAILED, .pos = parser->pos };
             }
 
-            parser->pos += 3; // _\r\n
+            RESPParseResult result = parse_null(parser, null);
 
-            value->value = null;
-            value->kind = RESP_NULL;
+            if (result.code == RESP_PARSE_SUCCESS) {
+                value->value = null;
+                value->kind = RESP_NULL;
+            }
 
-            return (RESPParseResult) { .code = RESP_PARSE_SUCCESS, .pos = parser->pos };
+            return result;
         }
     }
     

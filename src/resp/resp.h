@@ -35,8 +35,8 @@ typedef struct RESPSimpleString {
 } RESPSimpleString;
 
 typedef struct RESPArray {
-    // Element type is RESPValue
-    Hector array;
+    // Hector<RESPValue> Element type is RESPValue
+    Hector *array;
 } RESPArray;
 
 typedef struct RESPInteger {
