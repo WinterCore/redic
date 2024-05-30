@@ -60,6 +60,51 @@ void destroy_simple_string(RESPSimpleString *simple_string) {
     free(simple_string->string);
 }
 
+static RESPParseResult parse_bulk_string(RESPParser *parser, RESPBulkString *bulk_string) {
+    RESPParseResult result = { .code = RESP_PARSE_SUCCESS, .pos = parser->pos };
+
+    char *ptr = &parser->input[parser->pos];
+    size_t pos = parser->pos;
+
+    CONSUME_TOKEN(RESP_BULK_STRING, ptr, &pos);
+
+    char *end_ptr = NULL;
+    size_t length = strtoull(ptr, &end_ptr, 10);
+
+    pos += (end_ptr - ptr);
+    ptr += (end_ptr - ptr);
+
+    CONSUME_TOKEN('\r', ptr, &pos);
+    CONSUME_TOKEN('\n', ptr, &pos);
+
+    char *value = malloc(length * sizeof(char) + 1);
+
+    if (value == NULL) {
+        result.code = RESP_PARSE_MEMORY_ALLOC_FAILED;
+
+        return result;
+    }
+
+    memcpy(value, &parser->input[pos], length);
+
+    bulk_string->length = length;
+    bulk_string->data = value;
+
+    pos += length;
+    ptr += length;
+    
+    CONSUME_TOKEN('\r', ptr, &pos);
+    CONSUME_TOKEN('\n', ptr, &pos);
+
+    parser->pos = pos;
+
+    return result;
+}
+
+void destroy_bulk_string(RESPBulkString *bulk_string) {
+    free(bulk_string->data);
+}
+
 static RESPParseResult parse_integer(RESPParser *parser, RESPInteger *integer) {
     RESPParseResult result = { .code = RESP_PARSE_SUCCESS, .pos = parser->pos };
 
@@ -77,6 +122,7 @@ static RESPParseResult parse_integer(RESPParser *parser, RESPInteger *integer) {
 
     CONSUME_TOKEN('\r', ptr, &pos);
     CONSUME_TOKEN('\n', ptr, &pos);
+    DEBUG_PRINT("within %zu", pos);
 
     parser->pos = pos;
 
@@ -152,6 +198,8 @@ void destroy_array(RESPArray *array) {
     for (size_t i = 0; i < hector->length; i += 1) {
         RESPValue *value = hector_get(hector, i);
         destroy_value(value);
+
+        free(value);
     }
 
     // Destroy the vector
@@ -168,6 +216,11 @@ void destroy_value(RESPValue *value) {
 
         case RESP_SIMPLE_STRING: {
             destroy_simple_string(value->value);
+            break;
+        }
+
+        case RESP_BULK_STRING: {
+            destroy_bulk_string(value->value);
             break;
         }
 
@@ -188,57 +241,38 @@ void destroy_value(RESPValue *value) {
 }
 
 static RESPParseResult resp_parse_value(RESPParser *parser, RESPValue *value) {
-    switch (*parser->input) {
+    #define PARSE_VALUE(KIND, STRUCT, PARSE_FN) \
+        STRUCT *kind_value = malloc(sizeof(STRUCT)); \
+        if (kind_value == NULL) { \
+            return (RESPParseResult) { .code = RESP_PARSE_MEMORY_ALLOC_FAILED, .pos = parser->pos }; \
+        } \
+        RESPParseResult result =  PARSE_FN(parser, kind_value); \
+        if (result.code == RESP_PARSE_SUCCESS) { \
+            value->value = kind_value; \
+            value->kind = KIND; \
+        } \
+        return result
+        
+
+    switch (parser->input[parser->pos]) {
         case RESP_INTEGER: {
-            RESPInteger *integer = malloc(sizeof(RESPInteger));
-
-            if (integer == NULL) {
-                return (RESPParseResult) { .code = RESP_PARSE_MEMORY_ALLOC_FAILED, .pos = parser->pos };
-            }
-
-            RESPParseResult result =  parse_integer(parser, integer);
-
-            if (result.code == RESP_PARSE_SUCCESS) {
-                value->value = integer;
-                value->kind = RESP_INTEGER;
-            }
-
-            return result;
+            PARSE_VALUE(RESP_INTEGER, RESPInteger, parse_integer);
         }
 
         case RESP_SIMPLE_STRING: {
-            RESPSimpleString *simple_string = malloc(sizeof(RESPSimpleString));
+            PARSE_VALUE(RESP_SIMPLE_STRING, RESPSimpleString, parse_simple_string);
+        }
 
-            if (simple_string == NULL) {
-                return (RESPParseResult) { .code = RESP_PARSE_MEMORY_ALLOC_FAILED, .pos = parser->pos };
-            }
-            
-            RESPParseResult result = parse_simple_string(parser, simple_string);
-
-            if (result.code == RESP_PARSE_SUCCESS) {
-                value->value = simple_string;
-                value->kind = RESP_SIMPLE_STRING;
-            }
-
-            return result;
-            
+        case RESP_BULK_STRING: {
+            PARSE_VALUE(RESP_BULK_STRING, RESPBulkString, parse_bulk_string);
         }
 
         case RESP_NULL: {
-            RESPNull *null = malloc(sizeof(RESPNull));
+            PARSE_VALUE(RESP_NULL, RESPNull, parse_null);
+        }
 
-            if (null == NULL) {
-                return (RESPParseResult) { .code = RESP_PARSE_MEMORY_ALLOC_FAILED, .pos = parser->pos };
-            }
-
-            RESPParseResult result = parse_null(parser, null);
-
-            if (result.code == RESP_PARSE_SUCCESS) {
-                value->value = null;
-                value->kind = RESP_NULL;
-            }
-
-            return result;
+        case RESP_ARRAY: {
+            PARSE_VALUE(RESP_ARRAY, RESPArray, parse_array);
         }
     }
     
@@ -252,8 +286,6 @@ RESPParseResult resp_parse_input(char *input, RESPValue *value) {
         .input = input,
         .pos = 0,
     };
-
-    DEBUG_PRINT("HELLO %s", "");
 
     return resp_parse_value(&parser, value);
 }
