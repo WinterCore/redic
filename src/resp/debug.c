@@ -1,7 +1,8 @@
 #include <stdio.h>
+#include <inttypes.h>
 
+#include "./resp.h"
 #include "../aids.h"
-#include "./debug.h"
 
 #define PRINT_INDENTED_FMT(LEVEL, fmt, ...) \
     for (size_t i = 0; i < LEVEL; i += 1) { \
@@ -12,22 +13,48 @@
 #define PRINT_INDENTED(LEVEL, fmt) \
     PRINT_INDENTED_FMT(LEVEL, fmt "%s", "");
 
+static void print_value_helper(size_t indent_level, RESPValue *value);
+
 static void print_simple_string(size_t indent_level, RESPSimpleString *simple_string) {
+    PRINT_INDENTED(indent_level, "RESPBulkString {\n");
+
+    PRINT_INDENTED_FMT(indent_level + 1, "%s\n", simple_string->string);
+
+    PRINT_INDENTED(indent_level, "}\n");
 }
 
 static void print_bulk_string(size_t indent_level, RESPBulkString *bulk_string) {
+    PRINT_INDENTED(indent_level, "RESPBulkString {\n");
+
+    PRINT_INDENTED(indent_level + 1, "data = [");
+    for (size_t i = 0; i < bulk_string->length; i += 1) {
+        printf("%s0x%X", i == 0 ? "" : ", ",  bulk_string->data[i]);
+    }
+    printf("]\n");
+
+    PRINT_INDENTED(indent_level, "}\n");
 }
 
 static void print_array(size_t indent_level, RESPArray *array) {
+    PRINT_INDENTED_FMT(indent_level, "RESPArray(length = %zu) {\n", array->array->length);
+
+    for (size_t i = 0; i < array->array->length; i += 1) {
+        RESPValue *value = hector_get(array->array, i);
+
+        print_value_helper(indent_level + 1, value);
+    }
+
+    PRINT_INDENTED(indent_level, "}\n");
 }
 
 static void print_null(size_t indent_level, RESPNull *null) {
+    PRINT_INDENTED(indent_level, "RESPNull {}\n");
 }
 
 static void print_integer(size_t indent_level, RESPInteger *integer) {
-    PRINT_INDENTED(indent_level, "RESPInteger {");
-    PRINT_INDENTED_FMT(indent_level + 1, "value = %lld", integer->value);
-    PRINT_INDENTED(indent_level, "}");
+    PRINT_INDENTED(indent_level, "RESPInteger {\n");
+    PRINT_INDENTED_FMT(indent_level + 1, "value = %" PRId64, integer->value);
+    PRINT_INDENTED(indent_level, "}\n");
 }
 
 static void print_value_helper(size_t indent_level, RESPValue *value) {
@@ -64,8 +91,8 @@ static void print_value_helper(size_t indent_level, RESPValue *value) {
     }
 }
 
-void print_value(RESPValue *value) {
-    printf("RESPValue {");
+void resp_print_value(RESPValue *value) {
+    PRINT_INDENTED(0, "RESPValue {\n")
     print_value_helper(1, value);
-    printf("}");
+    PRINT_INDENTED(0, "}\n")
 }

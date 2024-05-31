@@ -14,14 +14,17 @@ release: executable
 src/aids.o: src/aids.c src/aids.h
 	cc $(CFLAGS) -c -o src/aids.o src/aids.c $(LDFLAGS)
 
-src/resp/resp.o: src/resp/resp.h src/resp/resp.c src/aids.o
-	cc $(CFLAGS) -c -o src/resp/resp.o src/resp/resp.c src/aids.o $(LDFLAGS)
+src/resp/parser.o: src/resp/resp.h src/resp/parser.c src/aids.o
+	cc $(CFLAGS) -c -o src/resp/parser.o src/resp/parser.c src/aids.o $(LDFLAGS)
 
-src/resp/debug.o: src/resp/debug.h src/resp/resp.h src/aids.o
+src/resp/serializer.o: src/resp/serializer.c src/resp/resp.h src/aids.o
+	cc $(CFLAGS) -c -o src/resp/serializer.o src/resp/serializer.c src/aids.o $(LDFLAGS)
+
+src/resp/debug.o: src/resp/debug.c src/resp/resp.h src/aids.o
 	cc $(CFLAGS) -c -o src/resp/debug.o src/resp/debug.c src/aids.o $(LDFLAGS)
 
-Redic: src/main.c src/aids.o src/resp/resp.o src/resp/debug.o
-	cc $(CFLAGS) -o Redic src/main.c src/aids.o src/resp/resp.o src/resp/debug.o $(LDFLAGS)
+Redic: src/main.c src/aids.o src/resp/parser.o src/resp/debug.o src/resp/serializer.o src/resp/debug.o
+	cc $(CFLAGS) -o Redic src/main.c src/aids.o src/resp/parser.o src/resp/debug.o src/resp/serializer.o $(LDFLAGS)
 
 executable: Redic
 	./Redic

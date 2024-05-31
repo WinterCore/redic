@@ -13,12 +13,29 @@
 #define CONNECTION_QUEUE_SIZE 1
 
 void test() {
-    char *input = ":0\r\n";
+    /*
+    char *input = "*3\r\n$5\r\nhello\r\n*1\r\n+world\r\n";
 
     RESPValue value = {};
     
     RESPParseResult result = resp_parse_input(input, &value);   
     DEBUG_PRINT("RESULT: %d %zu", result.code, result.pos);
+
+    print_value(&value);
+    */
+
+    RESPNull null = {};
+
+    RESPValue value = {
+        .value = &null,
+        .kind = RESP_NULL,
+    };
+
+    char buff[1000];
+
+    resp_serialize_value(&buff[0], &value);
+    
+    printf("%d %d %s", buff[1] == '\r', buff[2] == '\n', buff);
 
     // DEBUG_PRINT("VALUE KIND: %d", value.kind == '_');
 }
