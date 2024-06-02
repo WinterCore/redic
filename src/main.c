@@ -24,12 +24,11 @@ void test() {
     print_value(&value);
     */
 
-    RESPNull null = {};
+    char *input = "*2\r\n$5\r\nhello\r\n$5\r\nworld\r\n";
 
-    RESPValue value = {
-        .value = &null,
-        .kind = RESP_NULL,
-    };
+    RESPValue value = {};
+    
+    RESPParseResult result = resp_parse_input(input, &value);   
 
     char buff[1000];
 

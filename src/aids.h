@@ -18,7 +18,8 @@
 
 #define UNIMPLEMENTED(fmt, ...) \
     printf("-----UNIMPLEMENTED---->: %s:%d:%s: " fmt "\n\n", __FILE__, __LINE__, __func__, __VA_ARGS__); \
-    fflush(stderr);
+    fflush(stderr); \
+    exit(-1);
 
 #define PANIC(msg) \
     perror(msg); \
