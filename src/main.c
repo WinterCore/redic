@@ -12,8 +12,8 @@
 
 #define CONNECTION_QUEUE_SIZE 1
 
+/*
 void test() {
-    /*
     char *input = "*3\r\n$5\r\nhello\r\n*1\r\n+world\r\n";
 
     RESPValue value = {};
@@ -22,7 +22,6 @@ void test() {
     DEBUG_PRINT("RESULT: %d %zu", result.code, result.pos);
 
     print_value(&value);
-    */
 
     char *input = "*2\r\n$5\r\nhello\r\n$5\r\nworld\r\n";
 
@@ -38,11 +37,9 @@ void test() {
 
     // DEBUG_PRINT("VALUE KIND: %d", value.kind == '_');
 }
+*/
 
 int main() {
-    test();
-    
-    /*
     int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
     uint16_t port = 6379;
 
@@ -120,10 +117,9 @@ int main() {
         DEBUG_PRINT("server established connection with %s (%s) %d\n", hostp->h_name, host_addr, client_addr.sin_port);
 
 
-        // Read from client forever
-
         char buffer[4096];
 
+        // Read from client forever
         while (1) {
             ssize_t bytes_read = read(client_fd, buffer, sizeof(buffer));
 
@@ -140,9 +136,25 @@ int main() {
             }
 
             DEBUG_PRINT("Read %ld bytes", bytes_read);
+
+            RESPValue value = {0};
+
+            RESPParseResult result = resp_parse_input(buffer, &value);
+
+            resp_print_parse_result(&result);
+
+            switch (value.kind) {
+                case RESP_SIMPLE_STRING: {
+                    DEBUG_PRINT("%s", ((RESPSimpleString *) value.value)->string);
+                    break;
+                }
+
+                default: {
+                    UNIMPLEMENTED("UNHANDLED RESP HANDLER FOR kind=%d", value.kind);
+                }
+            }
         }
     }
-    */
 
     return 0;
 }
