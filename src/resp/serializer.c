@@ -134,7 +134,7 @@ void serialize_value_helper(RESPSerializer *serializer, RESPValue *value) {
     }
 }
 
-void resp_serialize_value(char *buffer, RESPValue *value) {
+size_t resp_serialize_value(char *buffer, RESPValue *value) {
     RESPSerializer serializer = {
         .pos = 0,
         .buffer = buffer,
@@ -143,4 +143,6 @@ void resp_serialize_value(char *buffer, RESPValue *value) {
     serialize_value_helper(&serializer, value);
 
     serializer.buffer[serializer.pos] = '\0';
+
+    return serializer.pos;
 }

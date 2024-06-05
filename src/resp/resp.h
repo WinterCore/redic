@@ -55,9 +55,11 @@ typedef struct RESPNull {
 
 RESPParseResult resp_parse_input(char *input, RESPValue *value);
 
+void resp_print_parse_result(RESPParseResult *result);
+
 void resp_print_value(RESPValue *value);
 
 // TODO: Maybe take a buffer length as well so we can prevent overflowing
-void resp_serialize_value(char *buffer, RESPValue *value);
+size_t resp_serialize_value(char *buffer, RESPValue *value);
 
 #endif
