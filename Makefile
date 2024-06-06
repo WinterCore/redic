@@ -11,20 +11,10 @@ debug: executable
 release: CFLAGS += -DNDEBUG
 release: executable
 
-src/aids.o: src/aids.c src/aids.h
-	cc $(CFLAGS) -c -o src/aids.o src/aids.c $(LDFLAGS)
+SRC=$(wildcard *.c)
 
-src/resp/parser.o: src/resp/resp.h src/resp/parser.c src/aids.o
-	cc $(CFLAGS) -c -o src/resp/parser.o src/resp/parser.c src/aids.o $(LDFLAGS)
-
-src/resp/serializer.o: src/resp/serializer.c src/resp/resp.h src/aids.o
-	cc $(CFLAGS) -c -o src/resp/serializer.o src/resp/serializer.c src/aids.o $(LDFLAGS)
-
-src/resp/debug.o: src/resp/debug.c src/resp/resp.h src/aids.o
-	cc $(CFLAGS) -c -o src/resp/debug.o src/resp/debug.c src/aids.o $(LDFLAGS)
-
-Redic: src/main.c src/aids.o src/resp/parser.o src/resp/debug.o src/resp/serializer.o src/resp/debug.o
-	cc $(CFLAGS) -o Redic src/main.c src/aids.o src/resp/parser.o src/resp/debug.o src/resp/serializer.o $(LDFLAGS)
+Redic: $(SRC)
+	cc $(CFLAGS) -c -o $@ $^  $(LDFLAGS)
 
 executable: Redic
 	./Redic

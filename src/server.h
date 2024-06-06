@@ -10,4 +10,6 @@ typedef struct Server {
 
 } Server;
 
+Server create_server_instance();
+
 #endif
