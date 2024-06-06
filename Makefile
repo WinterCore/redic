@@ -1,23 +1,20 @@
 OS := $(shell uname)
 CFLAGS = -std=c11 -Wall -Wextra
 
-.PHONY: clean debug all executable
+.PHONY: clean debug all
 
-all: executable
 
 debug: CFLAGS += -ggdb -DDEBUG
-debug: executable
 
 release: CFLAGS += -DNDEBUG
-release: executable
 
-SRC=$(wildcard *.c)
+SRC_C=$(shell find . -name "*.c")
+SRC_ALL=$(shell find . -name "*.c" -o -name '*.h')
 
 Redic: $(SRC)
-	cc $(CFLAGS) -c -o $@ $^  $(LDFLAGS)
+	cc $(CFLAGS) -o Redic $(SRC_C) $(LDFLAGS)
 
-executable: Redic
-	./Redic
+all: Redic
 
 clean:
-	rm -rf Rustris ./src/**/*.o
+	rm -rf Redic ./src/*.o ./src/**/*.o

@@ -3,3 +3,4 @@ Redic
 *.o
 .cache
 *.dSYM
+compile_commands.json

@@ -11,6 +11,7 @@ typedef struct RESPSerializer {
 void serialize_value_helper(RESPSerializer *serializer, RESPValue *value);
 
 static void serialize_null(RESPSerializer *serializer, RESPNull *null) {
+    UNUSED(null);
     char *ptr = &serializer->buffer[serializer->pos];
 
     ptr[0] = RESP_NULL;

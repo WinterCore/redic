@@ -1,28 +1,54 @@
 #ifndef COMMAND_H
 #define COMMAND_H
 
+#include <stdbool.h>
+
 #include "../resp/resp.h"
 #include "../server.h"
 
-#define REGISTER_COMMAND(CMD_NAME, ARGS, HANDLER_FN) \
+#define COMMAND_ARGUMENT(TYPE, IS_OPTIONAL) \
+    ((CommandArgDefinition ) { .type = TYPE, .is_optional = IS_OPTIONAL })
 
-enum COMMAND_ARG_TYPE {
+#define COMMAND(CMD_NAME, ARGS_LEN, ARGS, HANDLER_FN) \
+    (CommandDefinition) { \
+        .name = CMD_NAME, \
+        .args_len = ARGS_LEN, \
+        .args = ARGS, \
+    }
+
+typedef enum CommandArgType {
     STRING,
-    INTEGER,
+    INEGER,
     DOUBLE,
     KEY,
     // ...
-};
+} CommandArgType;
+
+typedef struct CommandArgDefinition {
+    CommandArgType type;
+    bool is_optional;
+} CommandArgDefinition;
+
+typedef struct CommandDefinition {
+    char *name;
+
+    size_t args_len;
+    CommandArgDefinition *args;
+} CommandDefinition;
 
 typedef struct Option {
     bool is_present;
     void *value;
 } Option;
 
-typedef struct CommandDefinition {
-    char *name;
-} CommandDefinition;
+typedef struct CommandArg {
+    CommandDefinition *definition;
 
-RESPValue process_ping(Server *server);
+    void *value;
+} CommandArg;
+
+extern CommandDefinition PING_COMMAND;
+
+RESPValue process_command(Server *server, char *command);
 
 #endif
