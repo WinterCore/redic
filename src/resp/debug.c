@@ -49,6 +49,7 @@ static void print_array(size_t indent_level, RESPArray *array) {
 }
 
 static void print_null(size_t indent_level, RESPNull *null) {
+    UNUSED(null);
     PRINT_INDENTED(indent_level, "RESPNull {}\n");
 }
 
@@ -95,34 +96,34 @@ static void print_value_helper(size_t indent_level, RESPValue *value) {
 void resp_print_parse_result(RESPParseResult *result) {
     switch (result->code) {
     case RESP_PARSE_SUCCESS: {
-        PRINT_INDENTED(0, "RESPParseResult(SUCCESS)\n");
+        printf("RESPParseResult(SUCCESS)\n");
         break;
     }
 
     case RESP_PARSE_UNKNOWN_DATA_TYPE_MARKER: {
-        PRINT_INDENTED_FMT(0, "RESPParseResult(UNKNOWN_DATA_TYPE_MARKER) { pos = %zu }\n", result->pos);
+        printf("RESPParseResult(UNKNOWN_DATA_TYPE_MARKER) { pos = %zu }\n", result->pos);
         break;
     }
 
     case RESP_PARSE_UNEXPECTED_TOKEN: {
-        PRINT_INDENTED_FMT(0, "RESPParseResult(UNEXPECTED_TOKEN) { pos = %zu }\n", result->pos);
+        printf("RESPParseResult(UNEXPECTED_TOKEN) { pos = %zu }\n", result->pos);
         break;
     }
 
     case RESP_PARSE_EMPTY_INPUT: {
-        PRINT_INDENTED(0, "RESPParseResult(EMPTY_INPUT)\n");
+        printf("RESPParseResult(EMPTY_INPUT)\n");
         break;
     }
 
     case RESP_PARSE_MEMORY_ALLOC_FAILED:
-        PRINT_INDENTED(0, "RESPParseResult(MEM_ALLOC_FAILED)\n");
+        printf("RESPParseResult(MEM_ALLOC_FAILED)\n");
 
         break;
     }
 }
 
 void resp_print_value(RESPValue *value) {
-    PRINT_INDENTED(0, "RESPValue {\n")
+    printf("RESPValue {\n");
     print_value_helper(1, value);
-    PRINT_INDENTED(0, "}\n")
+    printf("}\n");
 }

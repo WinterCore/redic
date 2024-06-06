@@ -130,10 +130,12 @@ static RESPParseResult parse_integer(RESPParser *parser, RESPInteger *integer) {
 }
 
 void destroy_integer(RESPInteger *integer) {
+    UNUSED(integer);
     // noop
 }
 
 static RESPParseResult parse_null(RESPParser *parser, RESPNull *null) {
+    UNUSED(null);
     RESPParseResult result = { .code = RESP_PARSE_SUCCESS, .pos = parser->pos };
     char *ptr = &parser->input[parser->pos];
     size_t pos = parser->pos;
@@ -148,6 +150,7 @@ static RESPParseResult parse_null(RESPParser *parser, RESPNull *null) {
 }
 
 void destroy_null(RESPNull *null) {
+    UNUSED(null);
     // noop
 }
 

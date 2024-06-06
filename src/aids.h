@@ -9,6 +9,8 @@
 #define DEBUG_TEST 0
 #endif
 
+#define UNUSED(x) (void)(x)
+
 #define DEBUG_PRINT(fmt, ...) \
         if (DEBUG_TEST) { \
             fprintf(stderr, "-----DEBUG----> %s:%d:%s(): " fmt "\n\n", __FILE__, \
