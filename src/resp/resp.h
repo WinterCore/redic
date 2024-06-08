@@ -24,6 +24,7 @@ typedef enum RESPValueKind {
     RESP_ARRAY = '*',
     RESP_NULL = '_',
     RESP_INTEGER = ':',
+    RESP_SIMPLE_ERROR = '-',
 } RESPValueKind;
 
 typedef struct RESPValue {
@@ -52,6 +53,9 @@ typedef struct RESPInteger {
 typedef struct RESPNull {
 } RESPNull;
 
+typedef struct RESPSimpleError {
+    char *message;
+} RESPSimpleError;
 
 RESPParseResult resp_parse_input(char *input, RESPValue *value);
 

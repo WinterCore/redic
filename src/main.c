@@ -6,8 +6,10 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+
 #include "./aids.h"
 #include "./resp/resp.h"
+#include "./command/command.h"
 
 
 #define CONNECTION_QUEUE_SIZE 1
@@ -46,6 +48,10 @@ int main() {
     if (socket_fd < 0) {
         PANIC("Failed to create server socket");
     }
+
+    RESPValue value = process_command(NULL, "PING fhasdlfhlk");
+    
+    resp_print_value(&value);
 
     int optval = 1;
     setsockopt(
@@ -142,6 +148,7 @@ int main() {
             RESPParseResult result = resp_parse_input(buffer, &value);
 
             resp_print_parse_result(&result);
+            resp_print_value(&value);
 
             switch (value.kind) {
                 case RESP_SIMPLE_STRING: {
