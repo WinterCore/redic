@@ -5,6 +5,7 @@ CFLAGS = -std=c11 -Wall -Wextra
 
 
 debug: CFLAGS += -ggdb -DDEBUG
+debug: Redic
 
 release: CFLAGS += -DNDEBUG
 

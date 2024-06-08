@@ -25,6 +25,7 @@
 
 #define PANIC(msg) \
     perror(msg); \
+    fflush(stderr); \
     exit(-1);
 
 typedef struct Kyle {

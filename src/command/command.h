@@ -14,6 +14,7 @@
         .name = CMD_NAME, \
         .args_len = ARGS_LEN, \
         .args = ARGS, \
+        .processor = HANDLER_FN, \
     }
 
 typedef enum CommandArgType {
@@ -29,26 +30,28 @@ typedef struct CommandArgDefinition {
     bool is_optional;
 } CommandArgDefinition;
 
-typedef struct CommandDefinition {
-    char *name;
-
-    size_t args_len;
-    CommandArgDefinition *args;
-} CommandDefinition;
-
 typedef struct Option {
     bool is_present;
     void *value;
 } Option;
 
 typedef struct CommandArg {
-    CommandDefinition *definition;
+    CommandArgDefinition *definition;
 
     void *value;
 } CommandArg;
 
+typedef struct CommandDefinition {
+    char *name;
+
+    size_t args_len;
+    CommandArgDefinition *args;
+
+    RESPValue (*processor)(Server *server, CommandArg *args);
+} CommandDefinition;
+
 extern CommandDefinition PING_COMMAND;
 
-RESPValue process_command(Server *server, char *command);
+RESPValue process_command(Server *server, char *input_string);
 
 #endif
