@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "./arena.h"
+
 #ifdef DEBUG
 #define DEBUG_TEST 1
 #else
@@ -50,7 +52,7 @@ typedef struct Hector {
     void *mem;
 } Hector;
 
-Hector *hector_create(size_t elem_size, size_t init_size);
+Hector *hector_create(Arena *arena, size_t elem_size, size_t init_size);
 
 void hector_push(Hector *hec, void *item);
 void *hector_pop(Hector *hec);

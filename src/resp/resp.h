@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "../aids.h"
+#include "../arena.h"
 
 typedef enum RESPParseResultCode {
     RESP_PARSE_SUCCESS,
@@ -57,7 +58,7 @@ typedef struct RESPSimpleError {
     char *message;
 } RESPSimpleError;
 
-RESPParseResult resp_parse_input(char *input, RESPValue *value);
+RESPParseResult resp_parse_input(Arena *arena, char *input, RESPValue *value);
 
 void resp_print_parse_result(RESPParseResult *result);
 

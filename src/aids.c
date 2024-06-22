@@ -39,13 +39,13 @@ void kyle_destroy(Kyle kyle) {
 
 
 
-Hector *hector_create(size_t elem_size, size_t init_size) {
+Hector *hector_create(Arena *arena, size_t elem_size, size_t init_size) {
     // TODO: Check for malloc errors
-    Hector *hector = (Hector*) malloc(sizeof(Hector));
+    Hector *hector = (Hector*) arena_alloc(arena, sizeof(Hector));
     hector->elem_size = elem_size;
     hector->length = 0;
     hector->capacity = init_size;
-    void *mem = malloc(elem_size * init_size);
+    void *mem = arena_alloc(arena, elem_size * init_size);
     hector->mem = mem;
 
     return hector;
