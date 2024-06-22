@@ -5,6 +5,7 @@
 
 #include "../resp/resp.h"
 #include "../server.h"
+#include "../arena.h"
 
 #define COMMAND_ARGUMENT(TYPE, IS_OPTIONAL) \
     ((CommandArgDefinition ) { .type = TYPE, .is_optional = IS_OPTIONAL })
@@ -52,6 +53,6 @@ typedef struct CommandDefinition {
 
 extern CommandDefinition PING_COMMAND;
 
-RESPValue process_command(Server *server, char *input_string);
+RESPValue process_command(Arena *arena, Server *server, RESPValue *input);
 
 #endif

@@ -15,10 +15,9 @@ typedef struct RESPParser {
     size_t pos;
 } RESPParser;
 
-static RESPParseResult resp_parse_value(RESPParser *parser, RESPValue *value);
-void destroy_value(RESPValue *value);
+static RESPParseResult resp_parse_value(Arena *arena, RESPParser *parser, RESPValue *value);
 
-static RESPParseResult parse_simple_string(RESPParser *parser, RESPSimpleString *simple_string) {
+static RESPParseResult parse_simple_string(Arena *arena, RESPParser *parser, RESPSimpleString *simple_string) {
     RESPParseResult result = { .code = RESP_PARSE_SUCCESS, .pos = parser->pos };
 
     size_t pos = parser->pos;
@@ -33,7 +32,7 @@ static RESPParseResult parse_simple_string(RESPParser *parser, RESPSimpleString 
         ptr += 1;
     }
 
-    char *value = malloc(str_len * sizeof(char) + 1);
+    char *value = arena_alloc(arena, str_len * sizeof(char) + 1);
 
     if (value == NULL) {
         result.code = RESP_PARSE_MEMORY_ALLOC_FAILED;
@@ -56,11 +55,7 @@ static RESPParseResult parse_simple_string(RESPParser *parser, RESPSimpleString 
     return result;
 }
 
-void destroy_simple_string(RESPSimpleString *simple_string) {
-    free(simple_string->string);
-}
-
-static RESPParseResult parse_bulk_string(RESPParser *parser, RESPBulkString *bulk_string) {
+static RESPParseResult parse_bulk_string(Arena *arena, RESPParser *parser, RESPBulkString *bulk_string) {
     RESPParseResult result = { .code = RESP_PARSE_SUCCESS, .pos = parser->pos };
 
     char *ptr = &parser->input[parser->pos];
@@ -77,7 +72,7 @@ static RESPParseResult parse_bulk_string(RESPParser *parser, RESPBulkString *bul
     CONSUME_TOKEN('\r', ptr, &pos);
     CONSUME_TOKEN('\n', ptr, &pos);
 
-    char *value = malloc(length * sizeof(char) + 1);
+    char *value = arena_alloc(arena, length * sizeof(char) + 1);
 
     if (value == NULL) {
         result.code = RESP_PARSE_MEMORY_ALLOC_FAILED;
@@ -101,11 +96,8 @@ static RESPParseResult parse_bulk_string(RESPParser *parser, RESPBulkString *bul
     return result;
 }
 
-void destroy_bulk_string(RESPBulkString *bulk_string) {
-    free(bulk_string->data);
-}
-
-static RESPParseResult parse_integer(RESPParser *parser, RESPInteger *integer) {
+static RESPParseResult parse_integer(Arena *arena, RESPParser *parser, RESPInteger *integer) {
+    UNUSED(arena);
     RESPParseResult result = { .code = RESP_PARSE_SUCCESS, .pos = parser->pos };
 
     size_t pos = parser->pos;
@@ -129,12 +121,8 @@ static RESPParseResult parse_integer(RESPParser *parser, RESPInteger *integer) {
     return result;
 }
 
-void destroy_integer(RESPInteger *integer) {
-    UNUSED(integer);
-    // noop
-}
-
-static RESPParseResult parse_null(RESPParser *parser, RESPNull *null) {
+static RESPParseResult parse_null(Arena *arena, RESPParser *parser, RESPNull *null) {
+    UNUSED(arena);
     UNUSED(null);
     RESPParseResult result = { .code = RESP_PARSE_SUCCESS, .pos = parser->pos };
     char *ptr = &parser->input[parser->pos];
@@ -149,12 +137,7 @@ static RESPParseResult parse_null(RESPParser *parser, RESPNull *null) {
     return result;
 }
 
-void destroy_null(RESPNull *null) {
-    UNUSED(null);
-    // noop
-}
-
-static RESPParseResult parse_array(RESPParser *parser, RESPArray *array) {
+static RESPParseResult parse_array(Arena *arena, RESPParser *parser, RESPArray *array) {
     RESPParseResult result = { .code = RESP_PARSE_SUCCESS, .pos = parser->pos };
 
     char *ptr = &parser->input[parser->pos];
@@ -173,12 +156,12 @@ static RESPParseResult parse_array(RESPParser *parser, RESPArray *array) {
 
     parser->pos = pos;
 
-    Hector *hector = hector_create(sizeof(RESPValue), length);
+    Hector *hector = hector_create(arena, sizeof(RESPValue), length);
 
     while (length > 0) {
-        RESPValue *array_elem = malloc(sizeof(RESPValue));
+        RESPValue *array_elem = arena_alloc(arena, sizeof(RESPValue));
 
-        RESPParseResult result = resp_parse_value(parser, array_elem);
+        RESPParseResult result = resp_parse_value(arena, parser, array_elem);
 
         if (result.code != RESP_PARSE_SUCCESS) {
             return result;
@@ -194,62 +177,13 @@ static RESPParseResult parse_array(RESPParser *parser, RESPArray *array) {
     return result;
 }
 
-void destroy_array(RESPArray *array) {
-    Hector *hector = array->array;
-
-    // Destroy all the values recursively
-    for (size_t i = 0; i < hector->length; i += 1) {
-        RESPValue *value = hector_get(hector, i);
-        destroy_value(value);
-
-        free(value);
-    }
-
-    // Destroy the vector
-    hector_destroy(hector);
-}
-
-
-void destroy_value(RESPValue *value) {
-    switch (value->kind) {
-        case RESP_INTEGER: {
-            destroy_integer(value->value);
-            break;
-        }
-
-        case RESP_SIMPLE_STRING: {
-            destroy_simple_string(value->value);
-            break;
-        }
-
-        case RESP_BULK_STRING: {
-            destroy_bulk_string(value->value);
-            break;
-        }
-
-        case RESP_NULL: {
-            destroy_null(value->value);
-            break;
-        }
-
-        case RESP_ARRAY: {
-            destroy_array(value->value);
-            break;
-        }
-
-        default: {
-            UNIMPLEMENTED("destructor for %d", value->kind);
-        }
-    }
-}
-
-static RESPParseResult resp_parse_value(RESPParser *parser, RESPValue *value) {
+static RESPParseResult resp_parse_value(Arena *arena, RESPParser *parser, RESPValue *value) {
     #define PARSE_VALUE(KIND, STRUCT, PARSE_FN) \
-        STRUCT *kind_value = malloc(sizeof(STRUCT)); \
+        STRUCT *kind_value = arena_alloc(arena, sizeof(STRUCT)); \
         if (kind_value == NULL) { \
             return (RESPParseResult) { .code = RESP_PARSE_MEMORY_ALLOC_FAILED, .pos = parser->pos }; \
         } \
-        RESPParseResult result =  PARSE_FN(parser, kind_value); \
+        RESPParseResult result =  PARSE_FN(arena, parser, kind_value); \
         if (result.code == RESP_PARSE_SUCCESS) { \
             value->value = kind_value; \
             value->kind = KIND; \
@@ -284,11 +218,11 @@ static RESPParseResult resp_parse_value(RESPParser *parser, RESPValue *value) {
     return (RESPParseResult) { .code = RESP_PARSE_UNKNOWN_DATA_TYPE_MARKER, .pos = parser->pos };
 }
 
-RESPParseResult resp_parse_input(char *input, RESPValue *value) {
+RESPParseResult resp_parse_input(Arena *arena, char *input, RESPValue *value) {
     RESPParser parser = {
         .input = input,
         .pos = 0,
     };
 
-    return resp_parse_value(&parser, value);
+    return resp_parse_value(arena, &parser, value);
 }

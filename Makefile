@@ -18,4 +18,4 @@ Redic: $(SRC)
 all: Redic
 
 clean:
-	rm -rf Redic ./src/*.o ./src/**/*.o
+	rm -rf Redic ./src/*.o ./src/**/*.o ./Redic.dSYM
