@@ -6,10 +6,13 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include "./aids.h"
 #include "./resp/resp.h"
 #include "./command/command.h"
+#include "arena.h"
+#include "server.h"
 
 
 #define CONNECTION_QUEUE_SIZE 1
@@ -43,16 +46,39 @@ void test() {
 
 int main() {
     int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-    uint16_t port = 6379;
+    uint16_t port = 6969;
+
+    Arena *arena = arena_create();
+    
+    CommandArgDefinition *arg_defs = arena_alloc(arena, sizeof(CommandArgDefinition) * 0);
+    arg_defs[0].type = ARG_TYPE_STRING;
+    arg_defs[0].is_optional = false;
+    arg_defs[1].type = ARG_TYPE_STRING;
+    arg_defs[1].is_optional = false;
+    DEBUG_PRINT("PTR %zu", sizeof(CommandArgDefinition *));
+    DEBUG_PRINT("PTR %p", arg_defs);
+    DEBUG_PRINT("PTR %p", &arg_defs[0]);
+    DEBUG_PRINT("PTR %p", &arg_defs[1]);
+
+    RESPBulkString **input_args = arena_alloc(arena, sizeof(RESPBulkString *) * 0);
+
+    CommandArg *command_args = arena_alloc(arena, sizeof(CommandArg) * 0);
+
+    parse_command_arguments(
+        arena,
+        2,
+        &arg_defs,
+        0,
+        input_args,
+        command_args
+    );
+
+    UNIMPLEMENTED("TERMINATE %s", "");
 
     if (socket_fd < 0) {
         PANIC("Failed to create server socket");
     }
-
-    RESPValue value = process_command(NULL, "PING fhasdlfhlk");
     
-    resp_print_value(&value);
-
     int optval = 1;
     setsockopt(
         socket_fd,
@@ -92,6 +118,8 @@ int main() {
     struct sockaddr_in client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
 
+    Server server = create_server_instance();
+
     while (1) {
         int client_fd = accept(
             socket_fd,
@@ -122,45 +150,15 @@ int main() {
 
         DEBUG_PRINT("server established connection with %s (%s) %d\n", hostp->h_name, host_addr, client_addr.sin_port);
 
+        ClientSocketHandlerInput *handler_input = malloc(sizeof(ClientSocketHandlerInput));
+        // TODO: Check for malloc errors
+        handler_input->socket_fd = client_fd;
+        handler_input->server = &server;
+        
+        pthread_t tid;
+        pthread_create(&tid, NULL, handle_client_socket, handler_input);
 
-        char buffer[4096];
-
-        // Read from client forever
-        while (1) {
-            ssize_t bytes_read = read(client_fd, buffer, sizeof(buffer));
-
-            if (bytes_read == 0) {
-                DEBUG_PRINT("Connection was closed %s", "");
-
-                break;
-            }
-
-            if (bytes_read < 0) {
-                DEBUG_PRINT("An error occurred while reading! %ld", bytes_read);
-
-                break;
-            }
-
-            DEBUG_PRINT("Read %ld bytes", bytes_read);
-
-            RESPValue value = {0};
-
-            RESPParseResult result = resp_parse_input(buffer, &value);
-
-            resp_print_parse_result(&result);
-            resp_print_value(&value);
-
-            switch (value.kind) {
-                case RESP_SIMPLE_STRING: {
-                    DEBUG_PRINT("%s", ((RESPSimpleString *) value.value)->string);
-                    break;
-                }
-
-                default: {
-                    UNIMPLEMENTED("UNHANDLED RESP HANDLER FOR kind=%d", value.kind);
-                }
-            }
-        }
+        DEBUG_PRINT("Spawned thread %p", tid);
     }
 
     return 0;

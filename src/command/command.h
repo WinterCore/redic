@@ -19,10 +19,10 @@
     }
 
 typedef enum CommandArgType {
-    STRING,
-    INEGER,
-    DOUBLE,
-    KEY,
+    ARG_TYPE_STRING,
+    ARG_TYPE_INTEGER,
+    ARG_TYPE_DOUBLE,
+    ARG_TYPE_KEY,
     // ...
 } CommandArgType;
 
@@ -48,11 +48,25 @@ typedef struct CommandDefinition {
     size_t args_len;
     CommandArgDefinition *args;
 
-    RESPValue (*processor)(Server *server, CommandArg *args);
+    RESPValue (*processor)(Arena *arena, Server *server, CommandArg *args);
 } CommandDefinition;
 
 extern CommandDefinition PING_COMMAND;
 
 RESPValue process_command(Arena *arena, Server *server, RESPValue *input);
+
+typedef enum CommandArgumentsParseResult {
+    CMD_ARGS_TOO_FEW_ARGS,
+    CMD_ARGS_TYPE_MISMATCH,
+} CommandArgumentsParseResult;
+
+CommandArgumentsParseResult parse_command_arguments(
+    Arena *arena,
+    size_t arg_definitions_len,
+    CommandArgDefinition *arg_definitions,
+    size_t input_args_len,
+    RESPBulkString **input_args,
+    CommandArg *output_command_args
+);
 
 #endif

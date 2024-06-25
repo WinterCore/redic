@@ -8,21 +8,16 @@ static CommandDefinition* COMMANDS[] = {
     &PING_COMMAND,
 };
 
-typedef enum CommandArgumentsParseResult {
-    CMD_ARGS_TOO_FEW_ARGS,
-    CMD_ARGS_TYPE_MISMATCH,
-} CommandArgumentsParseResult;
-
-static CommandArgumentsParseResult parse_command_arguments(
+CommandArgumentsParseResult parse_command_arguments(
     Arena *arena,
-    CommandArgDefinition *arg_definitions,
     size_t arg_definitions_len,
-    RESPBulkString *input_args,
+    CommandArgDefinition *arg_definitions,
     size_t input_args_len,
+    RESPBulkString **input_args,
     CommandArg *output_command_args
 ) {
     for (size_t i = 0; i < arg_definitions_len; i += 1) {
-
+        CommandArgDefinition def = arg_definitions[i];
     }
 
     UNIMPLEMENTED("parse_command_arguments %s", "");
@@ -47,6 +42,7 @@ bool is_valid_command_array(RESPArray *array) {
 }
 
 RESPValue process_command_helper(
+    Arena *arena,
     Server *server,
     RESPBulkString *input_command,
     RESPBulkString **input_args,
@@ -58,10 +54,21 @@ RESPValue process_command_helper(
         CommandDefinition *command_def = COMMANDS[i];
 
         // DEBUG_PRINT("Checking command %s %d", command->name, strcmp(command->name, input_string));
-
+    
         if (strncmp(command_def->name, input_command->data, strlen(command_def->name)) == 0) {
+            CommandArg *parsed_args = arena_alloc(arena, sizeof(CommandArg) * args_len);
+
+            parse_command_arguments(
+                arena,
+                command_def->args_len,
+                &command_def->args,
+                args_len,
+                input_args,
+                parsed_args
+            );
+
             // TODO: Implement argument parsing
-            return command_def->processor(server, NULL);
+            return command_def->processor(arena, server, NULL);
         }
     }
 
@@ -81,13 +88,16 @@ RESPValue process_command(Arena *arena, Server *server, RESPValue *input) {
         RESPBulkString *command = ((RESPValue *) hector_get(array->array, 0))->value;
         size_t args_len = array->array->length - 1;
         RESPBulkString **args = arena_alloc(arena, sizeof(RESPBulkString *) * args_len);
+
         for (size_t i = 0; i < array->array->length; i += 1) {
             RESPBulkString *value = ((RESPValue *) hector_get(array->array, i))->value;
 
             args[i] = value;
         }
 
-        return process_command_helper(server, command, args, args_len);
+        return process_command_helper(arena, server, command, args, args_len);
     }
 
+
+    UNIMPLEMENTED("Inline command support %s", "");
 }

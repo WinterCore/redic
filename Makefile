@@ -12,7 +12,7 @@ release: CFLAGS += -DNDEBUG
 SRC_C=$(shell find . -name "*.c")
 SRC_ALL=$(shell find . -name "*.c" -o -name '*.h')
 
-Redic: $(SRC)
+Redic: $(SRC_ALL)
 	cc $(CFLAGS) -o Redic $(SRC_C) $(LDFLAGS)
 
 all: Redic
