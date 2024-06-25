@@ -26,7 +26,7 @@ static void serialize_simple_string(RESPSerializer *serializer, RESPSimpleString
 
     size_t len = strlen(simple_string->string);
 
-    ptr[0] += RESP_SIMPLE_STRING;
+    ptr[0] = RESP_SIMPLE_STRING;
 
     memcpy(&ptr[1], simple_string->string, len);
 
