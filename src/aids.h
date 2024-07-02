@@ -40,7 +40,6 @@ Kyle kyle_from_file(const char *path);
 void kyle_destroy(Kyle kyle);
 
 
-
 /**
  * Hector is a basic vector implementation
  */

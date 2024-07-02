@@ -8,11 +8,11 @@
 #include <unistd.h>
 #include <pthread.h>
 
-#include "./aids.h"
 #include "./resp/resp.h"
 #include "./command/command.h"
 #include "arena.h"
 #include "server.h"
+#include "./aids.h"
 
 
 #define CONNECTION_QUEUE_SIZE 1
@@ -48,6 +48,7 @@ int main() {
     int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
     uint16_t port = 6969;
 
+    /*
     Arena *arena = arena_create();
     
     CommandArgDefinition *arg_defs = arena_alloc(arena, sizeof(CommandArgDefinition) * 0);
@@ -74,6 +75,7 @@ int main() {
     );
 
     UNIMPLEMENTED("TERMINATE %s", "");
+    */
 
     if (socket_fd < 0) {
         PANIC("Failed to create server socket");
@@ -150,6 +152,7 @@ int main() {
 
         DEBUG_PRINT("server established connection with %s (%s) %d\n", hostp->h_name, host_addr, client_addr.sin_port);
 
+        // TODO: MEMORY LEAK; Need to free here after everything is done
         ClientSocketHandlerInput *handler_input = malloc(sizeof(ClientSocketHandlerInput));
         // TODO: Check for malloc errors
         handler_input->socket_fd = client_fd;
@@ -158,7 +161,7 @@ int main() {
         pthread_t tid;
         pthread_create(&tid, NULL, handle_client_socket, handler_input);
 
-        DEBUG_PRINT("Spawned thread %p", tid);
+        DEBUG_PRINT("Spawned thread %lu", tid);
     }
 
     return 0;
