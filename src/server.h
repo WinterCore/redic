@@ -1,6 +1,7 @@
 #ifndef SERVER_H
 #define SERVER_H
 
+#include <pthread.h>
 #include "./hashmap.h"
 
 /**
@@ -9,6 +10,7 @@
  * It contains things like config, data and the tcp connection
  */
 typedef struct Server {
+    pthread_mutex_t data_lock;
     map_t data_map;
 } Server;
 

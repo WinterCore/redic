@@ -67,4 +67,13 @@ void resp_print_value(RESPValue *value);
 // TODO: Maybe take a buffer length as well so we can prevent overflowing
 size_t resp_serialize_value(char *buffer, RESPValue *value);
 
+
+/**
+ * Value Constructors
+ */
+
+RESPValue resp_create_simple_error_value(Arena *arena, char *value);
+RESPValue resp_create_simple_string_value(Arena *arena, char *value);
+RESPValue resp_create_bulk_string_value(Arena *arena, size_t len, char *string);
+
 #endif

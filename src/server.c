@@ -13,6 +13,10 @@ Server create_server_instance() {
     Server server = {
         .data_map = hashmap_new(),
     };
+
+    if (pthread_mutex_init(&server.data_lock, NULL) != 0) {
+        PANIC("Failed to initialize data mutex");
+    }
     
     return server;
 }

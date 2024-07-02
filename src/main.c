@@ -152,7 +152,6 @@ int main() {
 
         DEBUG_PRINT("server established connection with %s (%s) %d\n", hostp->h_name, host_addr, client_addr.sin_port);
 
-        // TODO: MEMORY LEAK; Need to free here after everything is done
         ClientSocketHandlerInput *handler_input = malloc(sizeof(ClientSocketHandlerInput));
         // TODO: Check for malloc errors
         handler_input->socket_fd = client_fd;
@@ -161,7 +160,7 @@ int main() {
         pthread_t tid;
         pthread_create(&tid, NULL, handle_client_socket, handler_input);
 
-        DEBUG_PRINT("Spawned thread %lu", tid);
+        DEBUG_PRINT("Spawned thread %s", "");
     }
 
     return 0;

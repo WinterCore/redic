@@ -19,13 +19,8 @@ RESPValue process_ping(Arena *arena, Server *server, CommandArg **args) {
     Option *message_arg = (Option *) args[0]->value;
 
     if (message_arg->is_present) {
-        RESPBulkString *message = arena_alloc(arena, sizeof(RESPBulkString));
-        message->data = message_arg->value;
-        message->length = strlen(message_arg->value);
-        return (RESPValue) { .kind = RESP_BULK_STRING, .value = message };
+        return resp_create_bulk_string_value(arena, strlen(message_arg->value), message_arg->value);
     } else {
-        RESPSimpleString *pong = arena_alloc(arena, sizeof(RESPSimpleString));
-        pong->string = message_arg->value;
-        return (RESPValue) { .kind = RESP_SIMPLE_STRING, .value = pong };
+        return resp_create_simple_string_value(arena, "PONG");
     }
 }

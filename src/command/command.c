@@ -6,6 +6,7 @@
 
 static CommandDefinition* COMMANDS[] = {
     &PING_COMMAND,
+    &SET_COMMAND,
 };
 
 CommandArgumentsParseResult parse_command_arguments(
@@ -18,13 +19,12 @@ CommandArgumentsParseResult parse_command_arguments(
 ) {
     // TODO: Handle too many arguments
     DEBUG_PRINT("PARSING ARGS %s", "");
+
     for (size_t i = 0; i < arg_definitions_len; i += 1) {
         CommandArgDefinition def = arg_definitions[i];
         RESPBulkString *input_arg = i < input_args_len
             ? input_args[i]
             : NULL;
-
-        DEBUG_PRINT("ARG %p", input_arg);
 
         if (def.type == ARG_TYPE_STRING) {
             CommandArg *output_arg = arena_alloc(arena, sizeof(CommandArg));
@@ -35,11 +35,13 @@ CommandArgumentsParseResult parse_command_arguments(
                 option->is_present = input_arg != NULL;
                 output_arg->value = option;
 
-                char *str = arena_alloc(arena, input_arg->length + 1);
-                memcpy(str, input_arg->data, input_arg->length);
-                str[input_arg->length] = '\0';
+                if (input_arg != NULL) {
+                    char *str = arena_alloc(arena, input_arg->length + 1);
+                    memcpy(str, input_arg->data, input_arg->length);
+                    str[input_arg->length] = '\0';
 
-                option->value = str;
+                    option->value = str;
+                }
             } else {
                 if (input_arg == NULL) { // Required argument doesn't exist
                     return CMD_ARGS_TOO_FEW_ARGS;                    
@@ -87,6 +89,7 @@ RESPValue process_command_helper(
     size_t args_len
 ) {
     size_t commands_len = sizeof(COMMANDS) / sizeof(CommandDefinition *);
+    DEBUG_PRINT("inside helper %s", "");
 
     for (size_t i = 0; i < commands_len; i += 1) {
         CommandDefinition *command_def = COMMANDS[i];
@@ -114,7 +117,7 @@ RESPValue process_command_helper(
         }
     }
 
-    return (RESPValue) { .kind = RESP_SIMPLE_ERROR, .value = NULL };
+    return resp_create_simple_error_value(arena, "UNKNOWN COMMAND");
 }
 
 
@@ -131,7 +134,6 @@ RESPValue process_command(Arena *arena, Server *server, RESPValue *input) {
         size_t args_len = array->array->length - 1;
         RESPBulkString **args = arena_alloc(arena, sizeof(RESPBulkString *) * args_len);
 
-        DEBUG_PRINT("LEN %zu", array->array->length);
         for (size_t i = 1; i < array->array->length; i += 1) {
             RESPBulkString *value = ((RESPValue *) hector_get(array->array, i))->value;
 

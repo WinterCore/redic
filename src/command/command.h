@@ -52,8 +52,6 @@ typedef struct CommandDefinition {
     RESPValue (*processor)(Arena *arena, Server *server, CommandArg **args);
 } CommandDefinition;
 
-extern CommandDefinition PING_COMMAND;
-
 RESPValue process_command(Arena *arena, Server *server, RESPValue *input);
 
 typedef enum CommandArgumentsParseResult {
@@ -71,5 +69,12 @@ CommandArgumentsParseResult parse_command_arguments(
     RESPBulkString **input_args,
     CommandArg **output_command_args
 );
+
+
+/**
+ * Commands
+ */
+extern CommandDefinition PING_COMMAND;
+extern CommandDefinition SET_COMMAND;
 
 #endif

@@ -38,6 +38,25 @@ static void serialize_simple_string(RESPSerializer *serializer, RESPSimpleString
     serializer->pos += 1 + len + 2;
 }
 
+static void serialize_simple_error(RESPSerializer *serializer, RESPSimpleError *simple_error) {
+    char *ptr = &serializer->buffer[serializer->pos];
+
+    char *error_string = simple_error->message;
+    
+    size_t len = strlen(error_string);
+
+    ptr[0] = RESP_SIMPLE_ERROR;
+
+    memcpy(&ptr[1], error_string, len);
+
+    ptr += len + 1;
+
+    ptr[0] = '\r';
+    ptr[1] = '\n';
+    
+    serializer->pos += 1 + len + 2;
+}
+
 static void serialize_bulk_string(RESPSerializer *serializer, RESPBulkString *bulk_string) {
     char *ptr = &serializer->buffer[serializer->pos];
     
@@ -111,6 +130,11 @@ void serialize_value_helper(RESPSerializer *serializer, RESPValue *value) {
 
         case RESP_SIMPLE_STRING: {
             serialize_simple_string(serializer, value->value);
+            break;
+        }
+
+        case RESP_SIMPLE_ERROR: {
+            serialize_simple_error(serializer, value->value);
             break;
         }
 

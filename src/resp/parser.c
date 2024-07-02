@@ -55,6 +55,44 @@ static RESPParseResult parse_simple_string(Arena *arena, RESPParser *parser, RES
     return result;
 }
 
+static RESPParseResult parse_simple_error(Arena *arena, RESPParser *parser, RESPSimpleError *simple_error) {
+    RESPParseResult result = { .code = RESP_PARSE_SUCCESS, .pos = parser->pos };
+
+    size_t pos = parser->pos;
+    char *ptr = &parser->input[pos];
+
+    CONSUME_TOKEN(RESP_SIMPLE_ERROR, ptr, &pos);
+
+    size_t str_len = 0;
+
+    while (*ptr != '\r' && *ptr != '\n') {
+        str_len += 1;
+        ptr += 1;
+    }
+
+    char *value = arena_alloc(arena, str_len * sizeof(char) + 1);
+
+    if (value == NULL) {
+        result.code = RESP_PARSE_MEMORY_ALLOC_FAILED;
+
+        return result;
+    }
+    
+    memcpy(value, &parser->input[pos], str_len);
+
+    value[str_len * sizeof(char)] = '\0';
+    simple_error->message = value;
+
+    pos += str_len;
+
+    CONSUME_TOKEN('\r', ptr, &pos);
+    CONSUME_TOKEN('\n', ptr, &pos);
+
+    parser->pos = pos;
+
+    return result;
+}
+
 static RESPParseResult parse_bulk_string(Arena *arena, RESPParser *parser, RESPBulkString *bulk_string) {
     RESPParseResult result = { .code = RESP_PARSE_SUCCESS, .pos = parser->pos };
 
@@ -198,6 +236,10 @@ static RESPParseResult resp_parse_value(Arena *arena, RESPParser *parser, RESPVa
 
         case RESP_SIMPLE_STRING: {
             PARSE_VALUE(RESP_SIMPLE_STRING, RESPSimpleString, parse_simple_string);
+        }
+
+        case RESP_SIMPLE_ERROR: {
+            PARSE_VALUE(RESP_SIMPLE_ERROR, RESPSimpleError, parse_simple_error);
         }
 
         case RESP_BULK_STRING: {
