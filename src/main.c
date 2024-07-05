@@ -110,7 +110,7 @@ int main() {
 
     int listen_result = listen(socket_fd, CONNECTION_QUEUE_SIZE);
 
-    printf("Server is up and running on port %hu", port);
+    printf("Server is up and running on port %hu\n\n", port);
     fflush(stdout);
 
     if (listen_result < 0) {

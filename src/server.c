@@ -54,7 +54,7 @@ void *handle_client_socket(void *_handler_input) {
         resp_print_parse_result(&result);
         resp_print_value(&value);
 
-        RESPValue response_value = process_command(arena, NULL, &value);
+        RESPValue response_value = process_command(arena, handler_input->server, &value);
 
         size_t serialized_len = resp_serialize_value(buffer, &response_value);
 

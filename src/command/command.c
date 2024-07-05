@@ -9,6 +9,62 @@ static CommandDefinition* COMMANDS[] = {
     &SET_COMMAND,
 };
 
+
+CommandArgumentsParseResult parse_command_argument(
+    Arena *arena,
+    CommandArgDefinition *arg_definition,
+    RESPBulkString *input_arg,
+    CommandArg **output_command_arg
+) {
+    // Early error return; Field is required and there's no value
+    if (! arg_definition->is_optional && input_arg == NULL) {
+        return CMD_ARGS_TOO_FEW_ARGS;                    
+    }
+
+    CommandArg *output_arg = arena_alloc(arena, sizeof(CommandArg));
+    output_arg->definition = arg_definition;
+    *output_command_arg = output_arg;
+
+    void **value = &output_arg->value;
+
+    if (arg_definition->is_optional) {
+
+        Option *option = arena_alloc(arena, sizeof(Option));
+        option->is_present = input_arg != NULL;
+        output_arg->value = option;
+        
+        // Early success return; Field is optional and there's no value
+        if (input_arg == NULL) {
+            return CMD_ARGS_PARSE_SUCCESS;
+        }
+
+        value = &option->value;
+    }
+
+    switch (arg_definition->type) {
+        case ARG_TYPE_STRING:
+        case ARG_TYPE_KEY: {
+            char *str = arena_alloc(arena, input_arg->length + 1);
+            memcpy(str, input_arg->data, input_arg->length);
+            str[input_arg->length] = '\0';
+
+            *value = str;
+
+            break;
+        }
+        case ARG_TYPE_INTEGER: {
+            UNIMPLEMENTED("Unimplemented arg parser for ARG_TYPE_INTEGER %s", "");
+            break;
+        }
+        case ARG_TYPE_DOUBLE: {
+            UNIMPLEMENTED("Unimplemented arg parser for ARG_TYPE_DOUBLE %s", "");
+            break;
+        }
+    }
+
+    return CMD_ARGS_PARSE_SUCCESS;
+}
+
 CommandArgumentsParseResult parse_command_arguments(
     Arena *arena,
     size_t arg_definitions_len,
@@ -18,7 +74,6 @@ CommandArgumentsParseResult parse_command_arguments(
     CommandArg **output_command_args
 ) {
     // TODO: Handle too many arguments
-    DEBUG_PRINT("PARSING ARGS %s", "");
 
     for (size_t i = 0; i < arg_definitions_len; i += 1) {
         CommandArgDefinition def = arg_definitions[i];
@@ -26,38 +81,11 @@ CommandArgumentsParseResult parse_command_arguments(
             ? input_args[i]
             : NULL;
 
-        if (def.type == ARG_TYPE_STRING) {
-            CommandArg *output_arg = arena_alloc(arena, sizeof(CommandArg));
-            output_arg->definition = &def;
+        CommandArgumentsParseResult result = parse_command_argument(arena, &def, input_arg, &output_command_args[i]); 
 
-            if (def.is_optional) {
-                Option *option = arena_alloc(arena, sizeof(Option));
-                option->is_present = input_arg != NULL;
-                output_arg->value = option;
-
-                if (input_arg != NULL) {
-                    char *str = arena_alloc(arena, input_arg->length + 1);
-                    memcpy(str, input_arg->data, input_arg->length);
-                    str[input_arg->length] = '\0';
-
-                    option->value = str;
-                }
-            } else {
-                if (input_arg == NULL) { // Required argument doesn't exist
-                    return CMD_ARGS_TOO_FEW_ARGS;                    
-                } else {
-                    char *str = arena_alloc(arena, input_arg->length + 1);
-                    memcpy(str, input_arg->data, input_arg->length);
-                    str[input_arg->length] = '\0';
-
-                    output_arg->value = str;
-                }
-            }
-            output_command_args[i] = output_arg;
-        } else {
-            UNIMPLEMENTED("Unsupported argument type %d", def.type);
+        if (result != CMD_ARGS_PARSE_SUCCESS) {
+            return result;
         }
-        
     }
 
     return CMD_ARGS_PARSE_SUCCESS;
@@ -89,7 +117,6 @@ RESPValue process_command_helper(
     size_t args_len
 ) {
     size_t commands_len = sizeof(COMMANDS) / sizeof(CommandDefinition *);
-    DEBUG_PRINT("inside helper %s", "");
 
     for (size_t i = 0; i < commands_len; i += 1) {
         CommandDefinition *command_def = COMMANDS[i];
@@ -109,7 +136,8 @@ RESPValue process_command_helper(
             );
             
             if (parse_args_result != CMD_ARGS_PARSE_SUCCESS) {
-                UNIMPLEMENTED("FAILED TO PARSE ARGS %d", parse_args_result);
+                // TODO: Include more details in the error
+                return resp_create_simple_error_value(arena, "Invalid command arguments");
             }
 
             // TODO: Implement argument parsing

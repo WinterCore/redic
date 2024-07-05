@@ -17,6 +17,7 @@ CommandDefinition SET_COMMAND = COMMAND(
 );
 
 RESPValue process_set(Arena *arena, Server *server, CommandArg **args) {
+
     char *temp_key = args[0]->value;
     char *temp_value = args[1]->value;
     size_t key_len = strlen(temp_key);
@@ -28,6 +29,7 @@ RESPValue process_set(Arena *arena, Server *server, CommandArg **args) {
     if (key == NULL || value == NULL) {
         return resp_create_simple_error_value(arena, "Failed to allocate memory");
     }
+
 
     memcpy(key, temp_key, key_len);
     memcpy(value, temp_value, value_len);
