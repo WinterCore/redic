@@ -24,3 +24,9 @@ RESPValue resp_create_bulk_string_value(Arena *arena, size_t len, char *string) 
 
     return CREATE_RESP_VALUE(RESP_BULK_STRING, bulk_string);
 }
+
+RESPValue resp_create_null_value(Arena *arena) {
+    RESPBulkString *null = arena_alloc(arena, sizeof(RESPNull));
+
+    return CREATE_RESP_VALUE(RESP_NULL, null);
+}

@@ -10,10 +10,10 @@
 #define COMMAND_ARGUMENT(NAME, TYPE, IS_OPTIONAL) \
     ((CommandArgDefinition) { .name = NAME, .type = TYPE, .is_optional = IS_OPTIONAL })
 
-#define COMMAND(CMD_NAME, ARGS_LEN, ARGS, HANDLER_FN) \
+#define COMMAND(CMD_NAME, ARGS, HANDLER_FN) \
     (CommandDefinition) { \
         .name = CMD_NAME, \
-        .args_len = ARGS_LEN, \
+        .args_len = sizeof(ARGS) / sizeof(ARGS[0]), \
         .args = ARGS, \
         .processor = HANDLER_FN, \
     }
@@ -76,5 +76,6 @@ CommandArgumentsParseResult parse_command_arguments(
  */
 extern CommandDefinition PING_COMMAND;
 extern CommandDefinition SET_COMMAND;
+extern CommandDefinition GET_COMMAND;
 
 #endif

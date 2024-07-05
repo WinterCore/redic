@@ -75,5 +75,6 @@ size_t resp_serialize_value(char *buffer, RESPValue *value);
 RESPValue resp_create_simple_error_value(Arena *arena, char *value);
 RESPValue resp_create_simple_string_value(Arena *arena, char *value);
 RESPValue resp_create_bulk_string_value(Arena *arena, size_t len, char *string);
+RESPValue resp_create_null_value(Arena *arena);
 
 #endif

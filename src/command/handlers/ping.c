@@ -6,10 +6,9 @@ RESPValue process_ping(Arena *arena, Server *server, CommandArg **args);
 
 CommandDefinition PING_COMMAND = COMMAND(
     "PING",
-    1,
-    &((CommandArgDefinition []) {
+    ((CommandArgDefinition []) {
         COMMAND_ARGUMENT("message", ARG_TYPE_STRING, true),
-    })[0],
+    }),
     process_ping
 );
 
