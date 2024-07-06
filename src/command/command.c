@@ -11,89 +11,7 @@ static CommandDefinition* COMMANDS[] = {
 };
 
 
-CommandArgumentsParseResult parse_command_argument(
-    Arena *arena,
-    CommandArgDefinition *arg_definition,
-    RESPBulkString *input_arg,
-    CommandArg **output_command_arg
-) {
-    // Early error return; Field is required and there's no value
-    if (! arg_definition->is_optional && input_arg == NULL) {
-        return CMD_ARGS_TOO_FEW_ARGS;                    
-    }
-
-    CommandArg *output_arg = arena_alloc(arena, sizeof(CommandArg));
-    output_arg->definition = arg_definition;
-    *output_command_arg = output_arg;
-
-    void **value = &output_arg->value;
-
-    if (arg_definition->is_optional) {
-
-        Option *option = arena_alloc(arena, sizeof(Option));
-        option->is_present = input_arg != NULL;
-        output_arg->value = option;
-        
-        // Early success return; Field is optional and there's no value
-        if (input_arg == NULL) {
-            return CMD_ARGS_PARSE_SUCCESS;
-        }
-
-        value = &option->value;
-    }
-
-    switch (arg_definition->type) {
-        case ARG_TYPE_STRING:
-        case ARG_TYPE_KEY: {
-            char *str = arena_alloc(arena, input_arg->length + 1);
-            memcpy(str, input_arg->data, input_arg->length);
-            str[input_arg->length] = '\0';
-
-            *value = str;
-
-            break;
-        }
-        case ARG_TYPE_INTEGER: {
-            UNIMPLEMENTED("Unimplemented arg parser for ARG_TYPE_INTEGER %s", "");
-            break;
-        }
-        case ARG_TYPE_DOUBLE: {
-            UNIMPLEMENTED("Unimplemented arg parser for ARG_TYPE_DOUBLE %s", "");
-            break;
-        }
-    }
-
-    return CMD_ARGS_PARSE_SUCCESS;
-}
-
-CommandArgumentsParseResult parse_command_arguments(
-    Arena *arena,
-    size_t arg_definitions_len,
-    CommandArgDefinition arg_definitions[],
-    size_t input_args_len,
-    RESPBulkString **input_args,
-    CommandArg **output_command_args
-) {
-    // TODO: Handle too many arguments
-
-    for (size_t i = 0; i < arg_definitions_len; i += 1) {
-        CommandArgDefinition def = arg_definitions[i];
-        RESPBulkString *input_arg = i < input_args_len
-            ? input_args[i]
-            : NULL;
-
-        CommandArgumentsParseResult result = parse_command_argument(arena, &def, input_arg, &output_command_args[i]); 
-
-        if (result != CMD_ARGS_PARSE_SUCCESS) {
-            return result;
-        }
-    }
-
-    return CMD_ARGS_PARSE_SUCCESS;
-}
-
-
-bool is_valid_command_array(RESPArray *array) {
+bool is_valid_bulk_string_array_command(RESPArray *array) {
     // Zero length
     if (array->array->length == 0) {
         return false;
@@ -155,7 +73,7 @@ RESPValue process_command(Arena *arena, Server *server, RESPValue *input) {
     if (input->kind == RESP_ARRAY) {
         RESPArray *array = input->value;
 
-        if (! is_valid_command_array(array)) {
+        if (! is_valid_bulk_string_array_command(array)) {
             UNIMPLEMENTED("Invalid command bulk string array %s", "");
         }
 

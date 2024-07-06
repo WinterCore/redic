@@ -7,8 +7,26 @@
 #include "../server.h"
 #include "../arena.h"
 
-#define COMMAND_ARGUMENT(NAME, TYPE, IS_OPTIONAL) \
-    ((CommandArgDefinition) { .name = NAME, .type = TYPE, .is_optional = IS_OPTIONAL })
+#define COMMAND_ARGS(...) \
+    ((CommandArgDefinition []) { \
+        __VA_ARGS__ \
+    }) \
+
+#define COMMAND_ARG(NAME, TYPE, IS_OPTIONAL, TOKEN) \
+    ((CommandArgDefinition) { \
+        .name = NAME, \
+        .type = TYPE, \
+        .is_optional = IS_OPTIONAL, \
+        .token = TOKEN, \
+    })
+
+#define COMMAND_ARG_ONE_OF(NAME, IS_OPTIONAL, TOKEN, EXTRA) \
+    ((CommandArgDefinition) { \
+        .name = NAME, \
+        .type = ARG_TYPE_ONEOF, \
+        .is_optional = IS_OPTIONAL, \
+        .token = TOKEN, \
+    })
 
 #define COMMAND(CMD_NAME, ARGS, HANDLER_FN) \
     (CommandDefinition) { \
@@ -22,7 +40,10 @@ typedef enum CommandArgType {
     ARG_TYPE_STRING,
     ARG_TYPE_INTEGER,
     ARG_TYPE_DOUBLE,
+    ARG_TYPE_UNIX_TIME,
     ARG_TYPE_KEY,
+    ARG_TYPE_ONEOF,
+    ARG_TYPE_PURE_TOKEN,
     // ...
 } CommandArgType;
 
@@ -30,6 +51,10 @@ typedef struct CommandArgDefinition {
     char *name;
     CommandArgType type;
     bool is_optional;
+
+    char *token;
+
+    void *extra;
 } CommandArgDefinition;
 
 typedef struct Option {

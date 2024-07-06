@@ -9,9 +9,9 @@ RESPValue process_get(Arena *arena, Server *server, CommandArg **args);
 
 CommandDefinition GET_COMMAND = COMMAND(
     "GET",
-    ((CommandArgDefinition []) {
-        COMMAND_ARGUMENT("key", ARG_TYPE_KEY, false),
-    }),
+    COMMAND_ARGS(
+        COMMAND_ARG("key", ARG_TYPE_STRING, false, NULL)
+    ),
     process_get
 );
 
