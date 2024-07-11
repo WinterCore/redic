@@ -32,8 +32,8 @@ RESPValue process_command_helper(
     Arena *arena,
     Server *server,
     RESPBulkString *input_command,
-    RESPBulkString **input_args,
-    size_t args_len
+    size_t args_len,
+    RESPBulkString **input_args
 ) {
     size_t commands_len = sizeof(COMMANDS) / sizeof(CommandDefinition *);
 
@@ -42,8 +42,8 @@ RESPValue process_command_helper(
 
         // DEBUG_PRINT("Checking command %s %d", command->name, strcmp(command->name, input_string));
     
-        if (strncmp(command_def->name, input_command->data, strlen(command_def->name)) == 0) {
-            CommandArg **parsed_args = arena_alloc(arena, sizeof(CommandArg *) * args_len);
+        if (strcmp(command_def->name, input_command->data) == 0) {
+            CommandArg **parsed_args = arena_alloc(arena, sizeof(CommandArg *) * command_def->args_len);
 
             CommandArgumentsParseResult parse_args_result = parse_command_arguments(
                 arena,
@@ -87,7 +87,7 @@ RESPValue process_command(Arena *arena, Server *server, RESPValue *input) {
             args[i - 1] = value;
         }
 
-        return process_command_helper(arena, server, command, args, args_len);
+        return process_command_helper(arena, server, command, args_len, args);
     }
 
 

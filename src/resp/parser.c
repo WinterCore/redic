@@ -120,6 +120,8 @@ static RESPParseResult parse_bulk_string(Arena *arena, RESPParser *parser, RESPB
 
     memcpy(value, &parser->input[pos], length);
 
+    value[length] = '\0';
+
     bulk_string->length = length;
     bulk_string->data = value;
 
