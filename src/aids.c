@@ -36,6 +36,14 @@ void kyle_destroy(Kyle kyle) {
 }
 
 
+Option option_create(void *value) {
+    Option opt = {
+        .is_present = value != NULL,
+        .value = value,
+    };
+
+    return opt;
+}
 
 
 
@@ -113,3 +121,4 @@ void hector_destroy(Hector *hec) {
     free(hec->mem);
     free(hec);
 }
+

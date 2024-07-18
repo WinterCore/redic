@@ -20,19 +20,30 @@
         .token = TOKEN, \
     })
 
-#define COMMAND_ARG_ONE_OF(NAME, IS_OPTIONAL, TOKEN, EXTRA) \
+#define COMMAND_ARG_ONE_OF(NAME, IS_OPTIONAL, ARGS) \
     ((CommandArgDefinition) { \
         .name = NAME, \
         .type = ARG_TYPE_ONEOF, \
         .is_optional = IS_OPTIONAL, \
-        .token = TOKEN, \
+        .token = NULL, \
+        .extra = { \
+            .type = EXTRA_ARG_ARR, \
+            .value = { \
+                .arg_defs_arr =  { \
+                    .arg_defs_len = sizeof(ARGS) / sizeof(ARGS[0]), \
+                    .arg_defs = ARGS, \
+                }, \
+            } \
+        } \
     })
 
 #define COMMAND(CMD_NAME, ARGS, HANDLER_FN) \
     (CommandDefinition) { \
         .name = CMD_NAME, \
-        .args_len = sizeof(ARGS) / sizeof(ARGS[0]), \
-        .args = ARGS, \
+        .arg_defs_arr = { \
+            .arg_defs_len = sizeof(ARGS) / sizeof(ARGS[0]), \
+            .arg_defs = ARGS, \
+        }, \
         .processor = HANDLER_FN, \
     }
 
@@ -47,6 +58,22 @@ typedef enum CommandArgType {
     // ...
 } CommandArgType;
 
+typedef struct CommandArgDefinition CommandArgDefinition;
+
+typedef struct CommandArgDefinitionArray {
+    size_t arg_defs_len;
+    CommandArgDefinition *arg_defs;
+} CommandArgDefinitionArray;
+
+typedef struct CommandArgDefinitionExtra {
+    enum { EXTRA_ARG_ARR, EXTRA_DESCR } type;
+
+    union {
+        CommandArgDefinitionArray arg_defs_arr;
+        char *description;
+    } value;
+} CommandArgDefinitionExtra;
+
 typedef struct CommandArgDefinition {
     char *name;
     CommandArgType type;
@@ -54,13 +81,8 @@ typedef struct CommandArgDefinition {
 
     char *token;
 
-    void *extra;
+    CommandArgDefinitionExtra extra;
 } CommandArgDefinition;
-
-typedef struct Option {
-    bool is_present;
-    void *value;
-} Option;
 
 typedef struct CommandArg {
     CommandArgDefinition *definition;
@@ -71,22 +93,25 @@ typedef struct CommandArg {
 typedef struct CommandDefinition {
     char *name;
 
-    size_t args_len;
-    CommandArgDefinition *args;
-
+    CommandArgDefinitionArray arg_defs_arr;
     RESPValue (*processor)(Arena *arena, Server *server, CommandArg **args);
 } CommandDefinition;
 
 RESPValue process_command(Arena *arena, Server *server, RESPValue *input);
 
-typedef enum CommandArgumentsParseResult {
+typedef enum CommandArgParseResultType {
     CMD_ARGS_PARSE_SUCCESS,
     CMD_ARGS_TOO_FEW_ARGS,
     CMD_ARGS_TOO_MANY_ARGS,
     CMD_ARGS_TYPE_MISMATCH,
-} CommandArgumentsParseResult;
+} CommandArgParseResultType;
 
-CommandArgumentsParseResult parse_command_arguments(
+typedef struct CommandArgParseResult {
+    CommandArgParseResultType type;
+    size_t consumed_args;
+} CommandArgParseResult;
+
+CommandArgParseResult parse_command_arguments(
     Arena *arena,
     size_t arg_definitions_len,
     CommandArgDefinition arg_definitions[],

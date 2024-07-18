@@ -6,6 +6,16 @@
 
 RESPValue process_set(Arena *arena, Server *server, CommandArg **args);
 
+CommandArgDefinition foo = 
+    COMMAND_ARG_ONE_OF(
+        "condition",
+        true,
+        COMMAND_ARGS(
+            COMMAND_ARG("nx", ARG_TYPE_PURE_TOKEN, false, "NX"),
+            COMMAND_ARG("xx", ARG_TYPE_PURE_TOKEN, false, "XX"),
+        )
+    );
+
 CommandDefinition SET_COMMAND = COMMAND(
     "SET",
     COMMAND_ARGS(
@@ -14,7 +24,6 @@ CommandDefinition SET_COMMAND = COMMAND(
         COMMAND_ARG_ONE_OF(
             "condition",
             true,
-            NULL,
             COMMAND_ARGS(
                 COMMAND_ARG("nx", ARG_TYPE_PURE_TOKEN, false, "NX"),
                 COMMAND_ARG("xx", ARG_TYPE_PURE_TOKEN, false, "XX"),
@@ -24,7 +33,6 @@ CommandDefinition SET_COMMAND = COMMAND(
         COMMAND_ARG_ONE_OF(
             "expiration",
             true,
-            NULL,
             COMMAND_ARGS(
                 COMMAND_ARG("seconds", ARG_TYPE_INTEGER, false, "EX"),
                 COMMAND_ARG("milliseconds", ARG_TYPE_INTEGER, false, "PX"),

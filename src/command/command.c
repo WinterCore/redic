@@ -43,18 +43,19 @@ RESPValue process_command_helper(
         // DEBUG_PRINT("Checking command %s %d", command->name, strcmp(command->name, input_string));
     
         if (strcmp(command_def->name, input_command->data) == 0) {
-            CommandArg **parsed_args = arena_alloc(arena, sizeof(CommandArg *) * command_def->args_len);
+            CommandArg **parsed_args = arena_alloc(arena, sizeof(CommandArg *) * command_def->arg_defs_arr.arg_defs_len);
 
-            CommandArgumentsParseResult parse_args_result = parse_command_arguments(
+            CommandArgParseResult parse_args_result = parse_command_arguments(
                 arena,
-                command_def->args_len,
-                command_def->args,
+                command_def->arg_defs_arr.arg_defs_len,
+                command_def->arg_defs_arr.arg_defs,
                 args_len,
                 input_args,
                 parsed_args
             );
+
             
-            if (parse_args_result != CMD_ARGS_PARSE_SUCCESS) {
+            if (parse_args_result.type != CMD_ARGS_PARSE_SUCCESS) {
                 // TODO: Include more details in the error
                 return resp_create_simple_error_value(arena, "Invalid command arguments");
             }

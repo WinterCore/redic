@@ -2,6 +2,7 @@
 #define AIDS_H
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include "./arena.h"
 
@@ -38,6 +39,17 @@ typedef struct Kyle {
 Kyle kyle_from_file(const char *path);
 
 void kyle_destroy(Kyle kyle);
+
+
+/**
+ * Simple option implementation
+ */
+typedef struct Option {
+    bool is_present;
+    void *value;
+} Option;
+
+Option option_create(void *value);
 
 
 /**
