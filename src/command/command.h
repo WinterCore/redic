@@ -99,16 +99,11 @@ typedef struct CommandDefinition {
 
 RESPValue process_command(Arena *arena, Server *server, RESPValue *input);
 
-typedef enum CommandArgParseResultType {
+typedef enum CommandArgParseResult {
     CMD_ARGS_PARSE_SUCCESS,
     CMD_ARGS_TOO_FEW_ARGS,
     CMD_ARGS_TOO_MANY_ARGS,
     CMD_ARGS_TYPE_MISMATCH,
-} CommandArgParseResultType;
-
-typedef struct CommandArgParseResult {
-    CommandArgParseResultType type;
-    size_t consumed_args;
 } CommandArgParseResult;
 
 CommandArgParseResult parse_command_arguments(

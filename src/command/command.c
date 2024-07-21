@@ -55,7 +55,7 @@ RESPValue process_command_helper(
             );
 
             
-            if (parse_args_result.type != CMD_ARGS_PARSE_SUCCESS) {
+            if (parse_args_result != CMD_ARGS_PARSE_SUCCESS) {
                 // TODO: Include more details in the error
                 return resp_create_simple_error_value(arena, "Invalid command arguments");
             }

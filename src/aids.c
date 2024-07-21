@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "aids.h"
+#include "arena.h"
 
 Kyle kyle_from_file(const char *path) {
     FILE *fd = fopen(path, "rb");
@@ -36,11 +37,11 @@ void kyle_destroy(Kyle kyle) {
 }
 
 
-Option option_create(void *value) {
-    Option opt = {
-        .is_present = value != NULL,
-        .value = value,
-    };
+Option *option_create(Arena *arena, void *value) {
+    Option *opt = arena_alloc(arena, sizeof(Option));
+
+    opt->is_present = value != NULL;
+    opt->value = value;
 
     return opt;
 }

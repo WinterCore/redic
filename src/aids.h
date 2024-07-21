@@ -49,7 +49,7 @@ typedef struct Option {
     void *value;
 } Option;
 
-Option option_create(void *value);
+Option *option_create(Arena *arena, void *value);
 
 
 /**
