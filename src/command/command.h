@@ -103,6 +103,7 @@ typedef enum CommandArgParseResult {
     CMD_ARGS_PARSE_SUCCESS,
     CMD_ARGS_TOO_FEW_ARGS,
     CMD_ARGS_TOO_MANY_ARGS,
+    CMD_ARGS_TOKEN_MISMATCH,
     CMD_ARGS_TYPE_MISMATCH,
 } CommandArgParseResult;
 

@@ -65,8 +65,10 @@ bool iaa_consume_arg(InputArgArray *iaa, size_t index) {
 InputArgArray *iaa_clone_shrinked_window_at_index(Arena *arena, InputArgArray *iaa, size_t index) {
     int idx = iaa_peek_arg_index(iaa, index);
     
-    assert(idx >= 0 && "iaa_clone_windowed: idx should be >= 0");
-
+    if (idx == -1) {
+        idx = iaa->end;
+    }
+    
     // Clone existing iaa
     size_t bytes = sizeof(InputArgArray) + (sizeof(bool) * iaa->args_len);
     InputArgArray *iaa_shrinked = arena_alloc(arena, bytes);
@@ -75,10 +77,9 @@ InputArgArray *iaa_clone_shrinked_window_at_index(Arena *arena, InputArgArray *i
     // TODO: I'm assuming ths is ok?
     size_t start = idx;
 
-    assert((int) start <= idx && "iaa_clone_windowed: start should be <= idx");
-
     size_t end = start;
-    while (! iaa->resolved_args[end]) {
+
+    while (end < iaa->args_len && ! iaa->resolved_args[end]) {
         end += 1;
     }
 
@@ -88,6 +89,13 @@ InputArgArray *iaa_clone_shrinked_window_at_index(Arena *arena, InputArgArray *i
     return iaa_shrinked;
 }
 
+CommandArgParseResult parse_command_argument(
+    Arena *arena,
+    CommandArgDefinition *arg_def,
+    InputArgArray *iaa,
+    CommandArg **output_command_arg
+);
+
 CommandArgParseResult parse_argument(
     Arena *arena,
     CommandArgDefinition *arg_def,
@@ -95,39 +103,42 @@ CommandArgParseResult parse_argument(
     CommandArg **output_command_arg
 ) {
     RESPBulkString *arg = iaa_peek_arg(iaa, 0);
-
-    if (! arg_def->is_optional && arg == NULL) {
-        return CMD_ARGS_TOO_FEW_ARGS;
-    }
-
     CommandArg *output_arg = arena_alloc(arena, sizeof(CommandArg));
     output_arg->definition = arg_def;
     *output_command_arg = output_arg;
 
     void **value = &output_arg->value;
 
+    Option *option = NULL;
+
     if (arg_def->is_optional) {
-        Option *option = option_create(arena, arg);
-
+        option = option_create(arena, arg);
         output_arg->value = option;
-        
-        // Early success return; Field is optional and there's no value
-        if (arg == NULL) {
-            return CMD_ARGS_PARSE_SUCCESS;
-        }
-
         value = &option->value;
     }
 
     switch (arg_def->type) {
         case ARG_TYPE_STRING:
         case ARG_TYPE_KEY: {
+            if (option == NULL && arg == NULL) {
+                return CMD_ARGS_TOO_FEW_ARGS;
+            }
+
+            if (option != NULL && arg == NULL) {
+                option->is_present = false;
+                return CMD_ARGS_PARSE_SUCCESS;
+            }
+
             iaa_consume_arg(iaa, 0);
             char *str = arena_alloc(arena, arg->length + 1);
             memcpy(str, arg->data, arg->length);
             str[arg->length] = '\0';
 
             *value = str;
+
+            if (option != NULL) {
+                option->is_present = true;
+            }
 
             return CMD_ARGS_PARSE_SUCCESS;
         }
@@ -150,9 +161,42 @@ CommandArgParseResult parse_argument(
                 PANIC("ONEOF arg type must have an arg array in 'extra'");
             }
 
-            UNIMPLEMENTED("Unimplemented arg parser for ARG_TYPE_ONEOF %s", "");
-            // TODO: TO BE IMPLEMENTED
-            break;
+            CommandArgDefinitionArray *arg_defs_arr = &arg_def_extra->value.arg_defs_arr;
+
+            for (size_t i = 0; i < arg_defs_arr->arg_defs_len; i += 1) {
+                CommandArgDefinition *inner_arg_def = &arg_defs_arr->arg_defs[i];
+
+                CommandArgParseResult result = parse_command_argument(
+                    arena,
+                    inner_arg_def,
+                    iaa,
+                    output_command_arg
+                );
+
+                
+                if (result == CMD_ARGS_PARSE_SUCCESS) {
+                    // If the one of definition is optional then wrap the matched value with option
+                    if (option) {
+                        option->value = (*output_command_arg)->value;
+                        option->is_present = true;
+
+                        (*output_command_arg)->value = option;
+                    }
+                    
+
+                    return result;
+                }
+            }
+
+            // Argument is optional
+            if (option != NULL) {
+                *value = NULL;
+                option->is_present = false;
+
+                return CMD_ARGS_PARSE_SUCCESS;
+            }
+
+            return CMD_ARGS_TYPE_MISMATCH;
         }
         case ARG_TYPE_PURE_TOKEN: {
             static bool TRUE = true;
@@ -200,6 +244,10 @@ CommandArgParseResult parse_command_argument(
                 output_command_arg
             );
 
+            for (size_t i = 0; i < iaa->args_len; i += 1) {
+                iaa->resolved_args[i] = shrinked_iaa->resolved_args[i];
+            }
+
             return result;
         }
 
@@ -217,8 +265,8 @@ CommandArgParseResult parse_command_argument(
         return CMD_ARGS_PARSE_SUCCESS;
     }
 
-    // TODO: Check if arg def is optional and return None
-    UNIMPLEMENTED("COULDN'T FIND TOKEN MATCH ARG %s", "");
+    
+    return CMD_ARGS_TOKEN_MISMATCH;
 }
 
 CommandArgParseResult parse_command_arguments(
