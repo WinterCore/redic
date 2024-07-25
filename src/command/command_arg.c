@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <string.h>
+#include <time.h>
 
 #include "./command.h"
 
@@ -143,16 +144,69 @@ CommandArgParseResult parse_argument(
             return CMD_ARGS_PARSE_SUCCESS;
         }
         case ARG_TYPE_INTEGER: {
-            UNIMPLEMENTED("Unimplemented arg parser for ARG_TYPE_INTEGER %s", "");
-            break;
+            if (option == NULL && arg == NULL) {
+                return CMD_ARGS_TOO_FEW_ARGS;
+            }
+
+            if (option != NULL && arg == NULL) {
+                option->is_present = false;
+                return CMD_ARGS_PARSE_SUCCESS;
+            }
+
+            // TODO: error handling
+            int64_t *num = arena_alloc(arena, sizeof(int64_t));
+            *num = strtoll(arg->data, NULL, 10);
+
+            *value = num;
+
+            if (option != NULL) {
+                option->is_present = true;
+            }
+
+            return CMD_ARGS_PARSE_SUCCESS;
         }
         case ARG_TYPE_DOUBLE: {
-            UNIMPLEMENTED("Unimplemented arg parser for ARG_TYPE_DOUBLE %s", "");
-            break;
+            if (option == NULL && arg == NULL) {
+                return CMD_ARGS_TOO_FEW_ARGS;
+            }
+
+            if (option != NULL && arg == NULL) {
+                option->is_present = false;
+                return CMD_ARGS_PARSE_SUCCESS;
+            }
+
+            // TODO: error handling
+            int64_t *num = arena_alloc(arena, sizeof(int64_t));
+            *num = strtod(arg->data, NULL);
+
+            *value = num;
+
+            if (option != NULL) {
+                option->is_present = true;
+            }
+
+            return CMD_ARGS_PARSE_SUCCESS;
         }
         case ARG_TYPE_UNIX_TIME: {
-            UNIMPLEMENTED("Unimplemented arg parser for ARG_TYPE_UNIX_TIME %s", "");
-            break;
+            if (option == NULL && arg == NULL) {
+                return CMD_ARGS_TOO_FEW_ARGS;
+            }
+
+            if (option != NULL && arg == NULL) {
+                option->is_present = false;
+                return CMD_ARGS_PARSE_SUCCESS;
+            }
+
+            long long int *num = arena_alloc(arena, sizeof(long long int));
+            *num = strtoll(arg->data, NULL, 10);
+
+            *value = num;
+
+            if (option != NULL) {
+                option->is_present = true;
+            }
+
+            return CMD_ARGS_PARSE_SUCCESS;
         }
         case ARG_TYPE_ONEOF: {
             CommandArgDefinitionExtra *arg_def_extra = &arg_def->extra;
@@ -202,9 +256,15 @@ CommandArgParseResult parse_argument(
             static bool TRUE = true;
             *value = &TRUE;
 
+            if (option) {
+                option->is_present = true;
+            }
+
             return CMD_ARGS_PARSE_SUCCESS;
         }
     }
+
+    UNREACHABLE();
 }
 
 CommandArgParseResult parse_command_argument(

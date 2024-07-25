@@ -18,7 +18,6 @@ CommandDefinition GET_COMMAND = COMMAND(
 RESPValue process_get(Arena *arena, Server *server, CommandArg **args) {
     char *key = args[0]->value;
 
-
     pthread_mutex_lock(&server->data_lock);
     // TODO: Copy the value here
     void *value = NULL;

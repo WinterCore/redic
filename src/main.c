@@ -158,7 +158,12 @@ int main() {
         handler_input->server = &server;
         
         pthread_t tid;
-        pthread_create(&tid, NULL, handle_client_socket, handler_input);
+        pthread_attr_t attr;
+        pthread_attr_init(&attr);
+        pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+
+        pthread_create(&tid, &attr, handle_client_socket, handler_input);
+        pthread_attr_destroy(&attr);
 
         DEBUG_PRINT("Spawned thread %s", "");
     }

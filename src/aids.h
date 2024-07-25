@@ -26,6 +26,11 @@
     fflush(stderr); \
     exit(-1);
 
+#define UNREACHABLE() \
+    printf("-----UNREACHABLE---->: %s:%d:%s: \n\n", __FILE__, __LINE__, __func__); \
+    fflush(stderr); \
+    exit(-1);
+
 #define PANIC(msg) \
     perror(msg); \
     fflush(stderr); \

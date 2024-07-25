@@ -11,6 +11,7 @@
 
 Server create_server_instance() {
     Server server = {
+        .arena = arena_create(),
         .data_map = hashmap_new(),
     };
 
