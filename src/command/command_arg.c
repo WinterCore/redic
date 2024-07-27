@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <string.h>
 #include <time.h>
+#include <inttypes.h>
 
 #include "./command.h"
 
@@ -152,10 +153,18 @@ CommandArgParseResult parse_argument(
                 option->is_present = false;
                 return CMD_ARGS_PARSE_SUCCESS;
             }
+            iaa_consume_arg(iaa, 0);
 
-            // TODO: error handling
+            // TODO: handle overflow/underflow
             int64_t *num = arena_alloc(arena, sizeof(int64_t));
-            *num = strtoll(arg->data, NULL, 10);
+            char *endptr;
+            *num = strtoll(arg->data, &endptr, 10);
+
+            DEBUG_PRINT("Wot is this %ld", endptr - arg->data);
+
+            if ((uint64_t) (endptr - arg->data) != arg->length) {
+                return CMD_ARGS_TYPE_MISMATCH;
+            }
 
             *value = num;
 
@@ -174,6 +183,7 @@ CommandArgParseResult parse_argument(
                 option->is_present = false;
                 return CMD_ARGS_PARSE_SUCCESS;
             }
+            iaa_consume_arg(iaa, 0);
 
             // TODO: error handling
             int64_t *num = arena_alloc(arena, sizeof(int64_t));
@@ -196,9 +206,11 @@ CommandArgParseResult parse_argument(
                 option->is_present = false;
                 return CMD_ARGS_PARSE_SUCCESS;
             }
+            iaa_consume_arg(iaa, 0);
 
             long long int *num = arena_alloc(arena, sizeof(long long int));
             *num = strtoll(arg->data, NULL, 10);
+            DEBUG_PRINT("UNIX TS: %" PRId64, *num);
 
             *value = num;
 
@@ -227,7 +239,6 @@ CommandArgParseResult parse_argument(
                     output_command_arg
                 );
 
-                
                 if (result == CMD_ARGS_PARSE_SUCCESS) {
                     // If the one of definition is optional then wrap the matched value with option
                     if (option) {
@@ -240,10 +251,15 @@ CommandArgParseResult parse_argument(
 
                     return result;
                 }
+
+                if (result != CMD_ARGS_TOKEN_MISMATCH) {
+                    return result;
+                }
             }
 
             // Argument is optional
             if (option != NULL) {
+                *output_command_arg = output_arg;
                 *value = NULL;
                 option->is_present = false;
 
@@ -255,6 +271,7 @@ CommandArgParseResult parse_argument(
         case ARG_TYPE_PURE_TOKEN: {
             static bool TRUE = true;
             *value = &TRUE;
+            // We don't consume tokens
 
             if (option) {
                 option->is_present = true;
@@ -303,7 +320,7 @@ CommandArgParseResult parse_command_argument(
                 shrinked_iaa,
                 output_command_arg
             );
-
+            
             for (size_t i = 0; i < iaa->args_len; i += 1) {
                 iaa->resolved_args[i] = shrinked_iaa->resolved_args[i];
             }
@@ -314,7 +331,7 @@ CommandArgParseResult parse_command_argument(
         i += 1;
     }
 
-    if (arg_def->is_optional) {
+    if (arg_def->is_optional && i == 0) {
         CommandArg *output_arg = arena_alloc(arena, sizeof(CommandArg));
         output_arg->definition = arg_def;
         *output_command_arg = output_arg;
@@ -356,6 +373,11 @@ CommandArgParseResult parse_command_arguments(
         if (result != CMD_ARGS_PARSE_SUCCESS) {
             return result;
         }
+    }
+
+    // Fail if there are remaining arguments
+    if (iaa_peek_arg_index(iaa, 0) != -1) {
+        return CMD_ARGS_TOO_MANY_ARGS;
     }
     
     return CMD_ARGS_PARSE_SUCCESS;

@@ -36,8 +36,8 @@ CommandDefinition SET_COMMAND = COMMAND(
             COMMAND_ARGS(
                 COMMAND_ARG("seconds", ARG_TYPE_INTEGER, false, "EX"),
                 COMMAND_ARG("milliseconds", ARG_TYPE_INTEGER, false, "PX"),
-                COMMAND_ARG("unix-time-seconds", ARG_TYPE_INTEGER, false, "EXAT"),
-                COMMAND_ARG("unix-time-milliseconds", ARG_TYPE_INTEGER, false, "PXAT"),
+                COMMAND_ARG("unix-time-seconds", ARG_TYPE_UNIX_TIME, false, "EXAT"),
+                COMMAND_ARG("unix-time-milliseconds", ARG_TYPE_UNIX_TIME, false, "PXAT"),
                 COMMAND_ARG("keepttl", ARG_TYPE_PURE_TOKEN, false, "KEEPTTL"),
             )
         ),
@@ -68,6 +68,7 @@ RESPValue process_set(Arena *arena, Server *server, CommandArg **args) {
     DEBUG_PRINT("NX %d", nx);
     DEBUG_PRINT("XX %d", xx);
     DEBUG_PRINT("GET %d", get);
+    DEBUG_PRINT("EXPIRATION %d", ((Option *) args[4]->value)->is_present);
 
     pthread_mutex_lock(&server->data_lock);
     hashmap_put(server->data_map, key, value);
