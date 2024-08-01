@@ -210,7 +210,7 @@ CommandArgParseResult parse_argument(
 
             long long int *num = arena_alloc(arena, sizeof(long long int));
             *num = strtoll(arg->data, NULL, 10);
-            DEBUG_PRINT("UNIX TS: %" PRId64, *num);
+            DEBUG_PRINT("UNIX TS: %lld", *num);
 
             *value = num;
 
@@ -331,7 +331,7 @@ CommandArgParseResult parse_command_argument(
         i += 1;
     }
 
-    if (arg_def->is_optional && i == 0) {
+    if (arg_def->is_optional) {
         CommandArg *output_arg = arena_alloc(arena, sizeof(CommandArg));
         output_arg->definition = arg_def;
         *output_command_arg = output_arg;

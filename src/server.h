@@ -26,4 +26,12 @@ typedef struct ClientSocketHandlerInput {
 
 void *handle_client_socket(void *handler_input);
 
+typedef struct MapEntry {
+    time_t expire_at;
+    bool expires;
+
+    // TODO: Implement different data types
+    void *value;
+} MapEntry;
+
 #endif
