@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <time.h>
 
 #include "./arena.h"
 
@@ -56,6 +57,10 @@ typedef struct Option {
 
 Option *option_create(Arena *arena, void *value);
 
+#define optional_type(type) struct { bool is_present; type value; }
+
+typedef optional_type(time_t) OptionTime;
+
 
 /**
  * Hector is a basic vector implementation
@@ -77,6 +82,8 @@ void hector_splice(Hector *hec, size_t n, size_t count);
 size_t hector_size(Hector *hec);
 void hector_destroy(Hector *hec);
 
+
+char *clone_string(Arena *arena, char *str);
 
 #endif
 

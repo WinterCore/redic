@@ -2,6 +2,7 @@
 #include <pthread.h>
 #include <string.h>
 
+#include "../../data.h"
 #include "../../hashmap.h"
 #include "../command.h"
 
@@ -20,9 +21,9 @@ RESPValue process_get(Arena *arena, Server *server, CommandArg **args) {
 
     pthread_mutex_lock(&server->data_lock);
     // TODO: Copy the value here
-    MapEntry *value = NULL;
+    DataEntry *entry = NULL;
 
-    int result = hashmap_get(server->data_map, key, (void **) &value);
+    int result = hashmap_get(server->data_map, key, (void **) &entry);
 
     if (result == MAP_MISSING) {
         pthread_mutex_unlock(&server->data_lock);
@@ -30,19 +31,16 @@ RESPValue process_get(Arena *arena, Server *server, CommandArg **args) {
         return resp_create_null_value(arena);
     }
 
-    if (value->expires) {
-        DEBUG_PRINT("EXPIRY(unix timestamp): %lld", (long long) value->expire_at);
-
-        time_t now = time(NULL);
-        double diff = value->expire_at - now;
-        
-        DEBUG_PRINT("EXPIRES IN(seconds): %f", diff);
+    if (data_is_expired(entry)) {
+        hashmap_remove(server->data_map, key);
+        data_destroy_entry(entry);
+        return resp_create_null_value(arena);
     }
 
     // Copy value
-    size_t len = strlen(value->value);
-    char *copy = arena_alloc(arena, len);
-    memcpy(copy, value->value, len);
+    DataString *str_entry = data_unwrap_string(entry);
+    char *copy = arena_alloc(arena, str_entry->len);
+    memcpy(copy, str_entry->str, str_entry->len);
     pthread_mutex_unlock(&server->data_lock);
 
 
