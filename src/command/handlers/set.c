@@ -65,8 +65,6 @@ ExpiryTime get_expire_time(CommandArg *arg) {
     if (strcmp(arg->definition->name, "seconds") == 0) {
         int64_t ms = *((int64_t *) option->value);
 
-        DEBUG_PRINT("seconds %" PRId64, ms);
-
         return (ExpiryTime) {
             .type = EXPIRY_UNIX_TS,
             .ts = time_s + ms,
@@ -111,31 +109,34 @@ RESPValue process_set(Arena *arena, Server *server, CommandArg **args) {
     bool xx = strcmp(condition->definition->name, "xx") == 0 && is_condition_on;
 
     bool get = ((Option *) args[3]->value)->is_present;
+
     CommandArg *expiration = args[4];
+    ExpiryTime expiry_time = get_expire_time(expiration);
     
-
-    DEBUG_PRINT("NX %d", nx);
-    DEBUG_PRINT("XX %d", xx);
-    DEBUG_PRINT("GET %d", get);
-    DEBUG_PRINT("EXPIRATION %d", ((Option *) args[4]->value)->is_present);
-
-
     pthread_mutex_lock(&server->data_lock);
 
-    DataEntry *old_value = NULL;
+    DataEntry *old_entry = NULL;
 
-    if (nx || xx || get) {
-        int result = hashmap_get(server->data_map, key, (void **) &old_value);
+    if (nx || xx || get || expiry_time.type == EXPIRY_KEEP_OLD) {
+        int result = hashmap_get(server->data_map, key, (void **) &old_entry);
+        
+        // Delete if expired
+        if (result == MAP_OK) {
+            if (data_is_expired(old_entry)) {
+                hashmap_remove(server->data_map, key);
+                old_entry = NULL;
+            }
+        }
 
         if (
             (nx && result == MAP_OK) ||
             (xx && result == MAP_MISSING)
         ) {
+            pthread_mutex_unlock(&server->data_lock);
             return resp_create_null_value(arena);
         }
     }
 
-    ExpiryTime expiry_time = get_expire_time(expiration);
     OptionTime expires_at;
 
     switch (expiry_time.type) {
@@ -150,8 +151,8 @@ RESPValue process_set(Arena *arena, Server *server, CommandArg **args) {
             break;
         }
         case EXPIRY_KEEP_OLD: {
-            if (old_value != NULL) {
-                expires_at = old_value->expires_at;
+            if (old_entry != NULL) {
+                expires_at = old_entry->expires_at;
             } else {
                 expires_at.value = -1;
                 expires_at.is_present = false;
@@ -163,7 +164,9 @@ RESPValue process_set(Arena *arena, Server *server, CommandArg **args) {
         }
     }
 
-    DataEntry *entry = data_create_string_entry(expires_at, value);
+    // TODO: Remove strlen and copy the length of the value from the RESPBulkString struct
+    // when parsing arguments
+    DataEntry *entry = data_create_string_entry(expires_at, strlen(value), value);
 
     hashmap_put(server->data_map, key, entry);
 
@@ -171,14 +174,15 @@ RESPValue process_set(Arena *arena, Server *server, CommandArg **args) {
     RESPValue returnValue;
     
     if (get) {
-        if (old_value == NULL) {
+        if (old_entry == NULL) {
             returnValue = resp_create_null_value(arena);
         } else {
-            DataString *old_str_value = data_unwrap_string(old_value);
+            DataString *old_str_value = data_unwrap_string(old_entry);
             char *value = arena_alloc(arena, old_str_value->len);
             strcpy(value, old_str_value->str);
 
             returnValue = resp_create_bulk_string_value(arena, old_str_value->len, value);
+            data_destroy_entry(old_entry);
         }
     } else {
         returnValue = resp_create_simple_string_value(arena, "OK");

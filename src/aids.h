@@ -83,7 +83,7 @@ size_t hector_size(Hector *hec);
 void hector_destroy(Hector *hec);
 
 
-char *clone_string(Arena *arena, char *str);
+char *clone_string(Arena *arena, size_t str_len, char *str);
 
 #endif
 

@@ -18,14 +18,16 @@ typedef struct DataEntry {
 } DataEntry;
 
 typedef struct DataString {
-    char *str;
     size_t len;
+
+    char str[];
 } DataString;
 
 bool data_is_expired(DataEntry *entry);
 
 DataEntry *data_create_string_entry(
     OptionTime expires_at,
+    size_t str_len,
     char *str
 );
 

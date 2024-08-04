@@ -8,12 +8,13 @@
 
 DataEntry *data_create_string_entry(
     OptionTime expires_at,
+    size_t str_len,
     char *str
 ) {
     DataEntry *entry = malloc(
         sizeof(DataEntry) +
         sizeof(DataString) +
-        strlen(str)
+        str_len
     );
     
     entry->type = DATA_STRING;
@@ -21,10 +22,8 @@ DataEntry *data_create_string_entry(
 
     DataString *data_str = (void *) entry->value;
 
-    // TODO: Don't use strlen here, because the value is supposed to be bulk string
-    // and might contain null characters. We should get the length as an argument
-    data_str->len = strlen(str);
-    memcpy(data_str->str, str, data_str->len);
+    data_str->len = str_len;
+    memcpy(data_str->str, str, str_len);
 
     return entry;
 }

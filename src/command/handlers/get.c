@@ -34,6 +34,7 @@ RESPValue process_get(Arena *arena, Server *server, CommandArg **args) {
     if (data_is_expired(entry)) {
         hashmap_remove(server->data_map, key);
         data_destroy_entry(entry);
+        pthread_mutex_unlock(&server->data_lock);
         return resp_create_null_value(arena);
     }
 
@@ -44,5 +45,5 @@ RESPValue process_get(Arena *arena, Server *server, CommandArg **args) {
     pthread_mutex_unlock(&server->data_lock);
 
 
-    return resp_create_bulk_string_value(arena, len, copy);
+    return resp_create_bulk_string_value(arena, str_entry->len, copy);
 }
