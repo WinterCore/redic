@@ -85,5 +85,7 @@ void hector_destroy(Hector *hec);
 
 char *clone_string(Arena *arena, size_t str_len, char *str);
 
+bool parse_long(char *str, long *value);
+
 #endif
 

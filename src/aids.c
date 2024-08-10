@@ -129,3 +129,11 @@ char *clone_string(Arena *arena, size_t str_len, char *str) {
 
     return copy;
 }
+
+bool parse_long(char *str, long *value) {
+    char *endptr;
+
+    *value = strtol(str, &endptr, 10);
+    
+    return str != endptr;
+}

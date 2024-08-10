@@ -6,6 +6,7 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <pthread.h>
 
 #include "./resp/resp.h"
@@ -13,6 +14,7 @@
 #include "arena.h"
 #include "server.h"
 #include "./aids.h"
+#include "./cli.h"
 
 
 #define CONNECTION_QUEUE_SIZE 1
@@ -44,9 +46,49 @@ void test() {
 }
 */
 
-int main() {
+const CLIOptionDefinition CLI_OPTION_DEFINITIONS[] = {
+    ((CLIOptionDefinition) {
+         .is_optional = true,
+         .name = "port",
+         .shorthand = "p",
+         .type = CLI_INTEGER,
+    }),
+};
+#define CLI_OPTIONS_LEN (sizeof(CLI_OPTION_DEFINITIONS) / sizeof(CLI_OPTION_DEFINITIONS[0]))
+
+CLIOption cli_options[CLI_OPTIONS_LEN] = {0};
+
+const uint16_t DEFAULT_PORT = 6969;
+
+uint16_t parse_port(char *str) {
+    // TODO: Add error handling
+    return strtoul(str, NULL, 10);
+}
+
+int main(int argc, char **argv) {
+    Arena *arena = arena_create();
+
+    bool success = cli_parse_opts(
+        arena,
+        CLI_OPTIONS_LEN,
+        CLI_OPTION_DEFINITIONS,
+        argc - 1,
+        argv + 1,
+        cli_options
+    );
+
+    if (! success) {
+        printf("usage: ./Redic [-p|--port num]\n");
+        exit(1);
+    }
+
+    Option *maybe_port = cli_options[0].value;
+
+    uint16_t port = maybe_port->is_present
+        ? *((long *) maybe_port->value)
+        : DEFAULT_PORT;
+
     int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-    uint16_t port = 6969;
 
     /*
     Arena *arena = arena_create();
