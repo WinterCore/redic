@@ -50,11 +50,13 @@ bool cli_parse_opts(
 
         if (def->is_optional) {
             option = option_create(a, NULL);
+            option->value = false;
             cli_option->value = option;
             value = &option->value;
         }
 
-        if (matched_idx == -1 && def->is_optional) {
+        // DEBUG_PRINT("IS OPTIONAL %d %d", def->is_optional, matched_idx);
+        if (matched_idx == -1) {
             if (def->is_optional) {
                 continue;
             } else {
@@ -99,11 +101,20 @@ bool cli_parse_opts(
                 
                 break;
             }
+            case CLI_STRING: {
+                if (iargs_len <= (size_t) matched_idx + 1) {
+                    return false;
+                }
+
+                char *raw_value = iargs[matched_idx + 1];
+                consumed_args += 1;
+
+                *value = raw_value;
+
+                break;
+            }
             case CLI_FLOAT: {
                 UNIMPLEMENTED("CLI FLOAT OPT PARSING %s", "");
-            }
-            case CLI_STRING: {
-                UNIMPLEMENTED("CLI FLOAT OPT STRING %s", "");
             }
             default: {
                 UNIMPLEMENTED("UNKNOWN CLI ARG TYPE %d", def->type);

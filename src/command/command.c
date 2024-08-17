@@ -8,6 +8,7 @@ static CommandDefinition* COMMANDS[] = {
     &PING_COMMAND,
     &SET_COMMAND,
     &GET_COMMAND,
+    &INFO_COMMAND,
 };
 
 

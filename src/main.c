@@ -53,6 +53,12 @@ const CLIOptionDefinition CLI_OPTION_DEFINITIONS[] = {
          .shorthand = "p",
          .type = CLI_INTEGER,
     }),
+    ((CLIOptionDefinition) {
+         .is_optional = false,
+         .name = "replicaof",
+         .shorthand = "r",
+         .type = CLI_STRING,
+    }),
 };
 #define CLI_OPTIONS_LEN (sizeof(CLI_OPTION_DEFINITIONS) / sizeof(CLI_OPTION_DEFINITIONS[0]))
 
@@ -78,17 +84,19 @@ int main(int argc, char **argv) {
     );
 
     if (! success) {
-        printf("usage: ./Redic [-p|--port num]\n");
+        printf("usage: ./Redic [-p|--port num] [-r|--replicaof \"host port\"]\n");
         exit(1);
     }
 
     Option *maybe_port = cli_options[0].value;
+    Option *maybe_replicaof = cli_options[1].value;
 
     uint16_t port = maybe_port->is_present
         ? *((long *) maybe_port->value)
         : DEFAULT_PORT;
 
     int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+
 
     /*
     Arena *arena = arena_create();

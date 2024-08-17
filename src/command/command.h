@@ -123,5 +123,6 @@ CommandArgParseResult parse_command_arguments(
 extern CommandDefinition PING_COMMAND;
 extern CommandDefinition SET_COMMAND;
 extern CommandDefinition GET_COMMAND;
+extern CommandDefinition INFO_COMMAND;
 
 #endif
