@@ -54,7 +54,7 @@ const CLIOptionDefinition CLI_OPTION_DEFINITIONS[] = {
          .type = CLI_INTEGER,
     }),
     ((CLIOptionDefinition) {
-         .is_optional = false,
+         .is_optional = true,
          .name = "replicaof",
          .shorthand = "r",
          .type = CLI_STRING,
@@ -73,6 +73,7 @@ uint16_t parse_port(char *str) {
 
 int main(int argc, char **argv) {
     Arena *arena = arena_create();
+    Server server = create_server_instance();
 
     bool success = cli_parse_opts(
         arena,
@@ -94,6 +95,15 @@ int main(int argc, char **argv) {
     uint16_t port = maybe_port->is_present
         ? *((long *) maybe_port->value)
         : DEFAULT_PORT;
+
+    if (maybe_replicaof->is_present) {
+        // TODO: Parse ip/port from replicaof string
+        SocketInfo master = {
+            .ip =
+        };
+        // server.master = NULL;
+    }
+    
 
     int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -169,8 +179,6 @@ int main(int argc, char **argv) {
 
     struct sockaddr_in client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
-
-    Server server = create_server_instance();
 
     while (1) {
         int client_fd = accept(
