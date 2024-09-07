@@ -23,7 +23,21 @@ typedef struct Server {
     pthread_mutex_t data_lock;
     map_t data_map;
     
-    SocketInfo *master;
+    /**
+     * The master this replica is connected to (only applies to replicas)
+     *
+     * Option<SocketInfo>
+     */
+    Option maybe_master;
+
+    /*
+     * Check maybe_master before accessing these
+     * TODO: Group master/replica only attributes in their own option to make
+     * the data easier to access
+     */
+    char *master_replid;
+    ssize_t master_repl_offset;
+
 } Server;
 
 Server create_server_instance();
@@ -34,5 +48,6 @@ typedef struct ClientSocketHandlerInput {
 } ClientSocketHandlerInput;
 
 void *handle_client_socket(void *handler_input);
+bool parse_socket_info(char *input, SocketInfo *socket_info);
 
 #endif

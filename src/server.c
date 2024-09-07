@@ -1,18 +1,21 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "./arena.h"
 #include "./server.h"
 #include "./aids.h"
 #include "./resp/resp.h"
 #include "./command/command.h"
-#include "hashmap.h"
+#include "./hashmap.h"
 
 
 Server create_server_instance() {
     Server server = {
         .arena = arena_create(),
         .data_map = hashmap_new(),
+        .maybe_master = (Option) { .is_present = false },
     };
 
     if (pthread_mutex_init(&server.data_lock, NULL) != 0) {
@@ -70,4 +73,28 @@ void *handle_client_socket(void *_handler_input) {
     free(handler_input);
 
     return NULL;
+}
+
+
+bool parse_socket_info(char *input, SocketInfo *socket_info) {
+    char *rest = input;
+    char *ipstr = strsep(&rest, " ");
+
+    if (ipstr == NULL || rest == NULL) {
+        return false;
+    }
+
+    if (inet_pton(AF_INET, ipstr, &socket_info->ip) != 1) {
+        return false;
+    }
+
+    char *endptr;
+
+    socket_info->port = strtol(rest, &endptr, 10);
+
+    if (endptr == rest) {
+        return false;
+    }
+
+    return true;
 }

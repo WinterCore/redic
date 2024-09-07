@@ -15,7 +15,7 @@ RESPValue process_info(Arena *arena, Server *server, CommandArg **args) {
 
     size_t n;
     
-    if (server->master == NULL) {
+    if (! server->maybe_master.is_present) {
         n = sprintf(info, "# Replication\nrole:master\nconnected_slaves:0\nmaster_replid:15\nmaster_repl_offset:0");
     } else {
         n = sprintf(info, "# Replication\nrole:replica\nconnected_slaves:0\nmaster_replid:15\nmaster_repl_offset:0");

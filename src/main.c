@@ -19,32 +19,10 @@
 
 #define CONNECTION_QUEUE_SIZE 1
 
-/*
-void test() {
-    char *input = "*3\r\n$5\r\nhello\r\n*1\r\n+world\r\n";
+#define EXIT_PRINT_USAGE() \
+    printf("usage: ./Redic [-p|--port num] [-r|--replicaof \"host port\"]\n"); \
+    exit(1);
 
-    RESPValue value = {};
-    
-    RESPParseResult result = resp_parse_input(input, &value);   
-    DEBUG_PRINT("RESULT: %d %zu", result.code, result.pos);
-
-    print_value(&value);
-
-    char *input = "*2\r\n$5\r\nhello\r\n$5\r\nworld\r\n";
-
-    RESPValue value = {};
-    
-    RESPParseResult result = resp_parse_input(input, &value);   
-
-    char buff[1000];
-
-    resp_serialize_value(&buff[0], &value);
-    
-    printf("%d %d %s", buff[1] == '\r', buff[2] == '\n', buff);
-
-    // DEBUG_PRINT("VALUE KIND: %d", value.kind == '_');
-}
-*/
 
 const CLIOptionDefinition CLI_OPTION_DEFINITIONS[] = {
     ((CLIOptionDefinition) {
@@ -85,8 +63,7 @@ int main(int argc, char **argv) {
     );
 
     if (! success) {
-        printf("usage: ./Redic [-p|--port num] [-r|--replicaof \"host port\"]\n");
-        exit(1);
+        EXIT_PRINT_USAGE();
     }
 
     Option *maybe_port = cli_options[0].value;
@@ -96,16 +73,22 @@ int main(int argc, char **argv) {
         ? *((long *) maybe_port->value)
         : DEFAULT_PORT;
 
+    // TODO: Move into a function
     if (maybe_replicaof->is_present) {
-        // TODO: Parse ip/port from replicaof string
-        SocketInfo master = {
-            .ip =
-        };
-        // server.master = NULL;
+        SocketInfo *socket_info = arena_alloc(arena, sizeof(SocketInfo));
+        
+        if (! parse_socket_info(maybe_replicaof->value, socket_info)) {
+            EXIT_PRINT_USAGE();
+        }
+
+        server.maybe_master.is_present = true;
+        server.maybe_master.value = socket_info;
+        DEBUG_PRINT("IP: %d", ((SocketInfo *) server.maybe_master.value)->ip.s_addr);
     }
     
 
     int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+
 
 
     /*
