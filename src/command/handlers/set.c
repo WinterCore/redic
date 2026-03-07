@@ -8,16 +8,6 @@
 
 RESPValue process_set(Arena *arena, Server *server, CommandArg **args);
 
-CommandArgDefinition foo = 
-    COMMAND_ARG_ONE_OF(
-        "condition",
-        true,
-        COMMAND_ARGS(
-            COMMAND_ARG("nx", ARG_TYPE_PURE_TOKEN, false, "NX"),
-            COMMAND_ARG("xx", ARG_TYPE_PURE_TOKEN, false, "XX"),
-        )
-    );
-
 CommandDefinition SET_COMMAND = COMMAND(
     "SET",
     COMMAND_ARGS(
@@ -105,8 +95,8 @@ RESPValue process_set(Arena *arena, Server *server, CommandArg **args) {
     
     CommandArg *condition = args[2];
     bool is_condition_on = ((Option *) condition->value)->is_present;
-    bool nx = strcmp(condition->definition->name, "nx") == 0 && is_condition_on;
-    bool xx = strcmp(condition->definition->name, "xx") == 0 && is_condition_on;
+    bool nx = is_condition_on && strcmp(condition->definition->name, "nx") == 0;
+    bool xx = is_condition_on && strcmp(condition->definition->name, "xx") == 0;
 
     bool get = ((Option *) args[3]->value)->is_present;
 
