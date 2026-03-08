@@ -77,12 +77,15 @@ void *handle_client_socket(void *_handler_input) {
 
 
 bool parse_socket_info(char *input, SocketInfo *socket_info) {
-    char *rest = input;
-    char *ipstr = strsep(&rest, " ");
+    char *space = strchr(input, ' ');
 
-    if (ipstr == NULL || rest == NULL) {
+    if (space == NULL) {
         return false;
     }
+
+    *space = '\0';
+    char *ipstr = input;
+    char *rest = space + 1;
 
     if (inet_pton(AF_INET, ipstr, &socket_info->ip) != 1) {
         return false;
