@@ -15,18 +15,6 @@
 - You can use any Redis cli or you can just use `redis-cli` which comes bundled with Redis
 - Don't forget to specify the port of Redic when running commands, eg: `redis-cli -p 6969 SET foo bar`
 
-
-## Bugs
-
-- **Shared read/write buffer** — the same 4096-byte buffer is used for both reading the request and serializing the response, meaning the response overwrites the input before parsing is done
-- **No partial read handling** — a single `read()` call is assumed to contain a complete command; TCP can deliver data in chunks so large commands split across packets will fail to parse
-- **Buffer overflow on response** — `resp_serialize_value` writes into the fixed 4096-byte buffer with no length limit, a large enough value will overflow it
-- **Null array crashes the parser** — `*-1\r\n` is a valid RESP null array; `strtoull("-1")` wraps to a huge number causing the parser to loop trying to read billions of elements
-- **Commands are case-sensitive** — command matching uses `strcmp` so `set foo bar` fails; Redis commands are case-insensitive
-- **`gethostbyaddr` crashes the server** — a failed reverse DNS lookup on a new connection calls `PANIC` and kills the entire process, taking down all connected clients
-- **`SET` uses `strlen` instead of bulk string length** — binary values containing null bytes are silently truncated; the length from the parsed `RESPBulkString` should be used instead
-- **`ARG_TYPE_DOUBLE` truncates to integer** — `strtod()` result is stored into an `int64_t *`, silently truncating any floating point value
-
 ## TODO
 
 - [x] TCP server with configurable port
