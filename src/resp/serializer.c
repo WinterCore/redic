@@ -98,7 +98,7 @@ static void serialize_integer(RESPSerializer *serializer, RESPInteger *integer) 
 static void serialize_array(RESPSerializer *serializer, RESPArray *array) {
     char *ptr = &serializer->buffer[serializer->pos];
     
-    ptr[0] = RESP_BULK_STRING;
+    ptr[0] = RESP_ARRAY;
     ptr += 1;
 
     int len_char_count = sprintf(ptr, "%zu", array->array->length);

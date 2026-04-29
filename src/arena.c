@@ -30,17 +30,19 @@ Arena *arena_create() {
 }
 
 void *arena_alloc(Arena *arena, size_t size) {
-    do  {
+    while (1) {
         if ((arena->size - arena->current) >= size) {
             uint8_t *ptr = &arena->data[arena->current];
             arena->current += size;
             return ptr;
         }
 
-        if (arena->next != NULL) {
-            arena = arena->next;
+        if (arena->next == NULL) {
+            break;
         }
-    } while (arena->next != NULL);
+
+        arena = arena->next;
+    }
 
     size_t new_arena_size = size > ARENA_PAGE_SIZE ? size : ARENA_PAGE_SIZE;
 

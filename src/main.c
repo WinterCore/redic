@@ -12,6 +12,7 @@
 #include "./resp/resp.h"
 #include "./command/command.h"
 #include "arena.h"
+#include "ring.h"
 #include "server.h"
 #include "./aids.h"
 #include "./cli.h"
@@ -19,6 +20,7 @@
 
 #define CONNECTION_QUEUE_SIZE 1
 
+// TODO: Generate usage from CLI_OPTION_DEFINITIONS
 #define EXIT_PRINT_USAGE() \
     printf("usage: ./Redic [-p|--port num] [-r|--replicaof \"host port\"]\n"); \
     exit(1);
@@ -50,6 +52,16 @@ uint16_t parse_port(char *str) {
 }
 
 int main(int argc, char **argv) {
+    RingBuf *rb = ringbuf_create(1, sizeof(int));
+    printf("%d\n", ringbuf_push(rb, &(int[]) {5}));
+    int *val = ringbuf_pop(rb);
+    printf("%d\n", *val);
+    printf("%d\n", ringbuf_push(rb, &(int[]) {3}));
+    printf("%d\n", ringbuf_push(rb, &(int[]) {4}));
+    printf("%d\n", ringbuf_push(rb, &(int[]) {8}));
+
+    UNIMPLEMENTED("hi %s", "");
+
     Arena *arena = arena_create();
     Server server = create_server_instance();
 
