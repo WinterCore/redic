@@ -52,16 +52,6 @@ uint16_t parse_port(char *str) {
 }
 
 int main(int argc, char **argv) {
-    RingBuf *rb = ringbuf_create(1, sizeof(int));
-    printf("%d\n", ringbuf_push(rb, &(int[]) {5}));
-    int *val = ringbuf_pop(rb);
-    printf("%d\n", *val);
-    printf("%d\n", ringbuf_push(rb, &(int[]) {3}));
-    printf("%d\n", ringbuf_push(rb, &(int[]) {4}));
-    printf("%d\n", ringbuf_push(rb, &(int[]) {8}));
-
-    UNIMPLEMENTED("hi %s", "");
-
     Arena *arena = arena_create();
     Server server = create_server_instance();
 

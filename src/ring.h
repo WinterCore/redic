@@ -14,8 +14,12 @@ typedef struct RingBuf {
 } RingBuf;
 
 RingBuf *ringbuf_create(size_t cap, size_t elem_size);
+void ringbuf_destroy(RingBuf *buf);
 
 bool ringbuf_push(RingBuf *buffer, void *elem);
 bool ringbuf_pop(RingBuf *buffer, void *out);
+
+#define ringbuf_is_full(buf) (buf->len >= buf->cap)
+#define ringbuf_is_empty(buf) (buf->len > 0)
 
 #endif

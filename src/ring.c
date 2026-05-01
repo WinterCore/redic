@@ -17,6 +17,10 @@ RingBuf *ringbuf_create(
     return buff;
 }
 
+void ringbuf_destroy(RingBuf *buf) {
+    free(buf);
+}
+
 bool ringbuf_push(RingBuf *buffer, void *elem) {
     if (buffer->len >= buffer->cap) {
         return false;

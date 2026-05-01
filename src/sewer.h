@@ -8,15 +8,26 @@
 typedef struct Sewer {
     RingBuf *buffer;
     pthread_mutex_t mutex;
-    pthread_cond_t condvar;
+
+    pthread_cond_t has_space;
+    pthread_cond_t has_items;
 } Sewer;
 
-Sewer *sewer_create(
-    size_t cap,
-    size_t elem_size
-);
+typedef struct SewerMessage {
+    void *value;
 
-void sewer_send(Sewer *sewer, void *elem);
-void sewer_consume(Sewer *sewer, void *out);
+    // Response sewer, single use ONLY
+    Sewer *blocked_sewer;
+    bool is_consumed;
+} SewerMessage;
+
+Sewer *sewer_create(size_t cap);
+void sewer_destroy(Sewer *sewer);
+
+void sewer_send(Sewer *sewer, SewerMessage *message);
+void sewer_consume(Sewer *sewer, SewerMessage *out_message);
+
+SewerMessage *sewer_message_create(void *value, bool with_response);
+void sewer_message_destroy(SewerMessage *message);
 
 #endif
