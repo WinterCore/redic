@@ -3,6 +3,7 @@
 
 #include <pthread.h>
 
+#include "arena.h"
 #include "ring.h"
 
 typedef struct Sewer {
@@ -16,8 +17,12 @@ typedef struct Sewer {
 typedef struct SewerMessage {
     void *value;
 
+    // Used by the consumer to allocate memory for values that will
+    // be passed back to the sender
+    Arena *arena;
+
     // Response sewer, single use ONLY
-    Sewer *blocked_sewer;
+    Sewer *clogged_sewer;
     bool is_consumed;
 } SewerMessage;
 
@@ -27,7 +32,7 @@ void sewer_destroy(Sewer *sewer);
 void sewer_send(Sewer *sewer, SewerMessage *message);
 void sewer_consume(Sewer *sewer, SewerMessage *out_message);
 
-SewerMessage *sewer_message_create(void *value, bool with_response);
+SewerMessage *sewer_message_create(Arena *arena, void *value, bool with_response);
 void sewer_message_destroy(SewerMessage *message);
 
 #endif

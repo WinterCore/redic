@@ -1,9 +1,9 @@
 #ifndef SEPTIC_TANK_H
 #define SEPTIC_TANK_H
 
+#include <pthread.h>
 #include "../hashmap.h"
 #include "../sewer.h"
-#include <sys/_pthread/_pthread_t.h>
 
 typedef struct SepticTank {
     map_t data;

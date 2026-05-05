@@ -1,4 +1,5 @@
 #include "sewer.h"
+#include "arena.h"
 #include "ring.h"
 #include <pthread.h>
 #include <stdlib.h>
@@ -46,11 +47,13 @@ void sewer_consume(Sewer *sewer, SewerMessage *out_message) {
     pthread_mutex_unlock(&sewer->mutex);
 }
 
-SewerMessage *sewer_message_create(void *value, bool with_response) {
-    SewerMessage *message = malloc(sizeof(SewerMessage));
+SewerMessage *sewer_message_create(Arena *arena, void *value, bool with_response) {
+    SewerMessage *message = arena == NULL
+        ? malloc(sizeof(SewerMessage))
+        : arena_alloc(arena, sizeof(SewerMessage));
     
     message->is_consumed = false;
-    message->blocked_sewer = with_response
+    message->clogged_sewer = with_response
         ? sewer_create(1)
         : NULL;
     message->value = value;
@@ -59,8 +62,8 @@ SewerMessage *sewer_message_create(void *value, bool with_response) {
 }
 
 void sewer_message_destroy(SewerMessage *message) {
-    if (message->blocked_sewer != NULL) {
-        sewer_destroy(message->blocked_sewer);
+    if (message->clogged_sewer != NULL) {
+        sewer_destroy(message->clogged_sewer);
     }
     free(message);
 }

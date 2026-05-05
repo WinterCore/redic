@@ -4,7 +4,16 @@
 
 #include "./data.h"
 #include "./aids.h"
+#include "arena.h"
 
+DataString *data_copy_string_arena(Arena *arena, DataString *string) {
+    size_t len = sizeof(DataString) + string->len + 1;
+    DataString *arena_string = arena_alloc(arena, len);
+    
+    memcpy(arena_string, string, len);
+
+    return arena_string;
+}
 
 DataEntry *data_create_string_entry(
     OptionTime expires_at,
@@ -14,7 +23,7 @@ DataEntry *data_create_string_entry(
     DataEntry *entry = malloc(
         sizeof(DataEntry) +
         sizeof(DataString) +
-        str_len
+        str_len + 1
     );
     
     entry->type = DATA_STRING;
@@ -24,6 +33,7 @@ DataEntry *data_create_string_entry(
 
     data_str->len = str_len;
     memcpy(data_str->str, str, str_len);
+    data_str->str[str_len] = '\0';
 
     return entry;
 }

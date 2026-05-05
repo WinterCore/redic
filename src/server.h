@@ -4,8 +4,9 @@
 #include <pthread.h>
 #include <arpa/inet.h>
 
-#include "./hashmap.h"
-#include "./aids.h"
+#include "hashmap.h"
+#include "aids.h"
+#include "sewer.h"
 
 typedef struct SocketInfo {
     struct in_addr ip;
@@ -20,8 +21,7 @@ typedef struct SocketInfo {
 typedef struct Server {
     Arena *arena;
 
-    pthread_mutex_t data_lock;
-    map_t data_map;
+    Sewer *septic_tank_sewer;
     
     /**
      * The master this replica is connected to (only applies to replicas)

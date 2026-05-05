@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 #include "./septic_tank.h"
-
+#include "septic_tank_operation.h"
 
 SepticTank *septic_tank_create(Sewer *sewer) {
     SepticTank *tank = malloc(sizeof(SepticTank));
@@ -17,16 +17,37 @@ void septic_tank_destroy(SepticTank *tank) {
     free(tank);
 }
 
+void septic_tank_digest(SepticTank *tank, SewerMessage *message) {
+    SepticTankOperation *operation = message->value;
+    
+    SepticTankResult *result;
+    switch (operation->type) {
+        case SEPTIC_TANK_SET: {
+            result = septic_tank_set(tank, message->arena, &operation->set);
+            break;
+        }
+        default:
+            UNIMPLEMENTED("Unknown digest operation %d", operation->type);
+    }
+
+    if (message->clogged_sewer) {
+        SewerMessage *message = sewer_message_create(message->arena, result, false);
+
+        // Ideally sewer_send never blocks, it would be a big no no if it did.
+        // We'd end up with lots of poo poo
+        sewer_send(message->clogged_sewer, message);
+        message->is_consumed = true;
+    }
+}
+
 void *septic_tank_pump(void *input) {
     SepticTank *tank = input;
     
     // Load sewage indefinitely...
-
-    pthread_mutex_lock(&tank->sewer->mutex);
-
     while (1) {
-        SewerMessage *message = sewer_message_create(void *value, bool with_response);
+        SewerMessage *message = NULL;
         sewer_consume(tank->sewer, message);
+        septic_tank_digest(tank, message);
     }
 }
 

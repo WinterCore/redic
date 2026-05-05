@@ -31,6 +31,7 @@ DataEntry *data_create_string_entry(
     char *str
 );
 
+DataString *data_copy_string_arena(Arena *arena, DataString *string);
 DataString *data_unwrap_string(DataEntry *entry);
 
 void data_destroy_entry(DataEntry *entry);

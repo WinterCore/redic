@@ -2,8 +2,8 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include "../../hashmap.h"
-#include "../../data.h"
+#include "../../sewer.h"
+#include "../../septic_tank/septic_tank_operation.h"
 #include "../command.h"
 
 RESPValue process_set(Arena *arena, Server *server, CommandArg **args);
@@ -103,81 +103,33 @@ RESPValue process_set(Arena *arena, Server *server, CommandArg **args) {
     CommandArg *expiration = args[4];
     ExpiryTime expiry_time = get_expire_time(expiration);
     
-    pthread_mutex_lock(&server->data_lock);
+    SepticTankOperation *operation = arena_alloc(arena, sizeof(SepticTankOperation));
+    operation->arena = arena;
+    operation->type = SEPTIC_TANK_SET;
+    operation->set = (SepticTankSetOperation) {
+        .expiration = { .type = ST_EXPIRATION_NO_EXPIRE },
+        .get = get,
+        .xx = xx,
+        .nx = nx,
+        .key = key,
+        .value = value,
+    };
+    SewerMessage *message = sewer_message_create(arena, operation, true);
 
-    DataEntry *old_entry = NULL;
-
-    if (nx || xx || get || expiry_time.type == EXPIRY_KEEP_OLD) {
-        int result = hashmap_get(server->data_map, key, (void **) &old_entry);
-        
-        // Delete if expired
-        if (result == MAP_OK) {
-            if (data_is_expired(old_entry)) {
-                hashmap_remove(server->data_map, key);
-                old_entry = NULL;
-            }
-        }
-
-        if (
-            (nx && result == MAP_OK) ||
-            (xx && result == MAP_MISSING)
-        ) {
-            pthread_mutex_unlock(&server->data_lock);
-            return resp_create_null_value(arena);
-        }
-    }
-
-    OptionTime expires_at;
-
-    switch (expiry_time.type) {
-        case EXPIRY_DOESNT_EXPIRE: {
-            expires_at.value = -1;
-            expires_at.is_present = false;
-            break;
-        }
-        case EXPIRY_UNIX_TS: {
-            expires_at.value = expiry_time.ts;
-            expires_at.is_present = true;
-            break;
-        }
-        case EXPIRY_KEEP_OLD: {
-            if (old_entry != NULL) {
-                expires_at = old_entry->expires_at;
-            } else {
-                expires_at.value = -1;
-                expires_at.is_present = false;
-            }
-            break;
-        }
-        default: {
-            UNREACHABLE();
-        }
-    }
-
-    // TODO: Remove strlen and copy the length of the value from the RESPBulkString struct
-    // when parsing arguments
-    DataEntry *entry = data_create_string_entry(expires_at, strlen(value), value);
-
-    hashmap_put(server->data_map, key, entry);
-
-
-    RESPValue returnValue;
+    SepticTankResult *result = septic_tank_feed(server->septic_tank_sewer, message);
     
-    if (get) {
-        if (old_entry == NULL) {
-            returnValue = resp_create_null_value(arena);
-        } else {
-            DataString *old_str_value = data_unwrap_string(old_entry);
-            char *value = arena_alloc(arena, old_str_value->len);
-            strcpy(value, old_str_value->str);
-
-            returnValue = resp_create_bulk_string_value(arena, old_str_value->len, value);
-            data_destroy_entry(old_entry);
+    if (result->success == false) {
+        if (result->error != NULL) {
+            return resp_create_simple_error_value(arena, result->error);
         }
-    } else {
-        returnValue = resp_create_simple_string_value(arena, "OK");
+
+        return resp_create_null_value(arena);
     }
 
-    pthread_mutex_unlock(&server->data_lock);
-    return returnValue;
+
+    if (result->set_result.old_value != NULL) {
+        return resp_create_simple_string_value(arena, result->set_result.old_value->str);
+    }
+
+    return resp_create_simple_string_value(arena, "OK");
 }
