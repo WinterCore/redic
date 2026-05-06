@@ -1,3 +1,4 @@
+#include <_string.h>
 #include <string.h>
 
 #include "septic_tank.h"
@@ -26,17 +27,22 @@ SepticTankResult *septic_tank_set(SepticTank *tank, Arena *result_arena, SepticT
             hashmap_remove(tank->data, op->key);
             free(old_entry);
             old_entry = NULL;
+            return result;
         }
+
+        DEBUG_PRINTF("nx %d, xx %d, get_result %d", op->nx, op->xx, get_result);
 
         if (
             (op->nx && get_result == MAP_OK) ||
             (op->xx && get_result == MAP_MISSING)
         ) {
-            result->success = true;
             if (op->get && old_entry != NULL) {
+                result->success = true;
                 DataString *old_value = data_unwrap_string(old_entry);
                 result->set_result.old_value = data_copy_string_arena(result_arena, old_value);
             }
+
+            result->success = false;
             return result;
         }
     }
@@ -64,7 +70,9 @@ SepticTankResult *septic_tank_set(SepticTank *tank, Arena *result_arena, SepticT
 
     // Insert new entry
     DataEntry *entry = data_create_string_entry(expires_at, strlen(op->value), op->value);
-    hashmap_put(tank->data, op->key, entry);
+    char *key = strdup(op->key);
+    hashmap_put(tank->data, key, entry);
+    result->success = true;
 
     if (op->get && old_entry != NULL) {
         DataString *old_value = data_unwrap_string(old_entry);

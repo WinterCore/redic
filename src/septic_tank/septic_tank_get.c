@@ -5,7 +5,7 @@ SepticTankResult *septic_tank_get(SepticTank *tank, Arena *result_arena, SepticT
     result->type = SEPTIC_TANK_GET;
 
     DataEntry *entry = NULL;
-    int get_result = hashmap_get(tank->data, op->key, (void *) entry);
+    int get_result = hashmap_get(tank->data, op->key, (void **) &entry);
 
     if (get_result == MAP_MISSING) {
         result->success = true;

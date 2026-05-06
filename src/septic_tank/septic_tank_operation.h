@@ -63,6 +63,7 @@ typedef struct SepticTankResult {
 } SepticTankResult;
 
 SepticTankResult *septic_tank_feed(
+    Arena *arena,
     Sewer *septic_tank_sewer,
     SewerMessage *message
 );

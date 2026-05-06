@@ -1,4 +1,5 @@
 #include "sewer.h"
+#include "aids.h"
 #include "arena.h"
 #include "ring.h"
 #include <pthread.h>

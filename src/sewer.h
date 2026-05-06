@@ -17,10 +17,6 @@ typedef struct Sewer {
 typedef struct SewerMessage {
     void *value;
 
-    // Used by the consumer to allocate memory for values that will
-    // be passed back to the sender
-    Arena *arena;
-
     // Response sewer, single use ONLY
     Sewer *clogged_sewer;
     bool is_consumed;

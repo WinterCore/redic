@@ -8,20 +8,15 @@
 #include "./aids.h"
 #include "./resp/resp.h"
 #include "./command/command.h"
-#include "./hashmap.h"
-
+#include "sewer.h"
 
 Server create_server_instance() {
     Server server = {
         .arena = arena_create(),
-        .data_map = hashmap_new(),
+        .septic_tank_sewer = sewer_create(100),
         .maybe_master = (Option) { .is_present = false },
     };
 
-    if (pthread_mutex_init(&server.data_lock, NULL) != 0) {
-        PANIC("Failed to initialize data mutex");
-    }
-    
     return server;
 }
 
@@ -35,6 +30,8 @@ void *handle_client_socket(void *_handler_input) {
 
     // Read from client forever
     while (1) {
+        // TODO: need to wire parser with the read command because a complete command
+        // may not always arrive in a single read call
         ssize_t bytes_read = read(handler_input->socket_fd, buffer, sizeof(buffer));
 
         if (bytes_read == 0) {

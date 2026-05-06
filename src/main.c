@@ -13,6 +13,7 @@
 #include "./command/command.h"
 #include "arena.h"
 #include "ring.h"
+#include "septic_tank/septic_tank.h"
 #include "server.h"
 #include "./aids.h"
 #include "./cli.h"
@@ -87,11 +88,10 @@ int main(int argc, char **argv) {
         server.maybe_master.value = socket_info;
         DEBUG_PRINT("IP: %d", ((SocketInfo *) server.maybe_master.value)->ip.s_addr);
     }
-    
 
     int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 
-
+    
 
     /*
     Arena *arena = arena_create();
@@ -164,6 +164,8 @@ int main(int argc, char **argv) {
 
     struct sockaddr_in client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
+
+    septic_tank_launch(server.septic_tank_sewer);
 
     while (1) {
         int client_fd = accept(

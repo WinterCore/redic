@@ -116,8 +116,8 @@ RESPValue process_set(Arena *arena, Server *server, CommandArg **args) {
     };
     SewerMessage *message = sewer_message_create(arena, operation, true);
 
-    SepticTankResult *result = septic_tank_feed(server->septic_tank_sewer, message);
-    
+    SepticTankResult *result = septic_tank_feed(arena, server->septic_tank_sewer, message);
+
     if (result->success == false) {
         if (result->error != NULL) {
             return resp_create_simple_error_value(arena, result->error);
@@ -127,9 +127,17 @@ RESPValue process_set(Arena *arena, Server *server, CommandArg **args) {
     }
 
 
-    if (result->set_result.old_value != NULL) {
-        return resp_create_simple_string_value(arena, result->set_result.old_value->str);
+    if (get) {
+        if (result->set_result.old_value != NULL) {
+            return resp_create_simple_string_value(
+                arena,
+                result->set_result.old_value->str
+            );
+        }
+
+        return resp_create_null_value(arena);
     }
+    
 
     return resp_create_simple_string_value(arena, "OK");
 }

@@ -2,6 +2,7 @@
 
 
 SepticTankResult *septic_tank_feed(
+    Arena *arena,
     Sewer *septic_tank_sewer,
     SewerMessage *message
 ) {
@@ -9,7 +10,7 @@ SepticTankResult *septic_tank_feed(
     sewer_send(septic_tank_sewer, message);
 
     // Wait for response
-    SewerMessage *response_message = NULL;
+    SewerMessage *response_message = arena_alloc(arena, sizeof(SewerMessage));
     sewer_consume(message->clogged_sewer, response_message);
 
     SepticTankResult *result = response_message->value;

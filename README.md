@@ -26,6 +26,7 @@
 - [x] `GET key`
 - [x] `INFO` (replication section)
 - [x] TTL stored per key with lazy expiry on access
+- [x] Actor pattern for data layer — single-threaded data store (septic tank) with lock-free reads/writes via message-passing (sewer channels + ring buffer)
 - [ ] `DEL key [key ...]` — delete one or more keys, returns the count of keys removed
 - [ ] `EXISTS key [key ...]` — returns how many of the given keys exist
 - [ ] `EXPIRE key seconds` — set a timeout on a key after which it is automatically deleted

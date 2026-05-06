@@ -25,7 +25,7 @@ RESPValue process_get(Arena *arena, Server *server, CommandArg **args) {
     operation->get = (SepticTankGetOperation) { .key = key };
     SewerMessage *message = sewer_message_create(arena, operation, true);
 
-    SepticTankResult *result = septic_tank_feed(server->septic_tank_sewer, message);
+    SepticTankResult *result = septic_tank_feed(arena, server->septic_tank_sewer, message);
 
     // TODO: Handle error
     if (result->get_result.value == NULL) {

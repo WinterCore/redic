@@ -22,8 +22,12 @@ void septic_tank_digest(SepticTank *tank, SewerMessage *message) {
     
     SepticTankResult *result;
     switch (operation->type) {
+        case SEPTIC_TANK_GET: {
+            result = septic_tank_get(tank, operation->arena, &operation->get);
+            break;
+        }
         case SEPTIC_TANK_SET: {
-            result = septic_tank_set(tank, message->arena, &operation->set);
+            result = septic_tank_set(tank, operation->arena, &operation->set);
             break;
         }
         default:
@@ -31,24 +35,26 @@ void septic_tank_digest(SepticTank *tank, SewerMessage *message) {
     }
 
     if (message->clogged_sewer) {
-        SewerMessage *message = sewer_message_create(message->arena, result, false);
+        SewerMessage *response_message = sewer_message_create(operation->arena, result, false);
 
         // Ideally sewer_send never blocks, it would be a big no no if it did.
         // We'd end up with lots of poo poo
-        sewer_send(message->clogged_sewer, message);
-        message->is_consumed = true;
+        sewer_send(message->clogged_sewer, response_message);
+        response_message->is_consumed = true;
     }
 }
 
 void *septic_tank_pump(void *input) {
     SepticTank *tank = input;
+    SewerMessage *message = malloc(sizeof(SewerMessage));
     
     // Load sewage indefinitely...
     while (1) {
-        SewerMessage *message = NULL;
         sewer_consume(tank->sewer, message);
         septic_tank_digest(tank, message);
     }
+
+    free(message);
 }
 
 pthread_t septic_tank_launch(Sewer *sewer) {

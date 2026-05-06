@@ -23,12 +23,13 @@ typedef struct _hashmap_map{
 	int table_size;
 	int size;
 	hashmap_element *data;
+	hashmap_free_key_fn free_key;
 } hashmap_map;
 
 /*
  * Return an empty hashmap, or NULL on failure.
  */
-map_t hashmap_new() {
+map_t hashmap_new_with_free(hashmap_free_key_fn free_key) {
 	hashmap_map* m = (hashmap_map*) malloc(sizeof(hashmap_map));
 	if(!m) goto err;
 
@@ -37,12 +38,17 @@ map_t hashmap_new() {
 
 	m->table_size = INITIAL_SIZE;
 	m->size = 0;
+	m->free_key = free_key;
 
 	return m;
 	err:
 		if (m)
 			hashmap_free(m);
 		return NULL;
+}
+
+map_t hashmap_new() {
+	return hashmap_new_with_free(NULL);
 }
 
 /* The implementation here was originally done by Gary S. Brown.  I have
@@ -366,6 +372,7 @@ int hashmap_remove(map_t in, char* key){
         if (in_use == 1){
             if (strcmp(m->data[curr].key,key)==0){
                 /* Blank out the fields */
+                if (m->free_key) m->free_key(m->data[curr].key);
                 m->data[curr].in_use = 0;
                 m->data[curr].data = NULL;
                 m->data[curr].key = NULL;
@@ -385,6 +392,13 @@ int hashmap_remove(map_t in, char* key){
 /* Deallocate the hashmap */
 void hashmap_free(map_t in){
 	hashmap_map* m = (hashmap_map*) in;
+	if (m->free_key) {
+		for (int i = 0; i < m->table_size; i++) {
+			if (m->data[i].in_use) {
+				m->free_key(m->data[i].key);
+			}
+		}
+	}
 	free(m->data);
 	free(m);
 }

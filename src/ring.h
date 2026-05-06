@@ -20,6 +20,6 @@ bool ringbuf_push(RingBuf *buffer, void *elem);
 bool ringbuf_pop(RingBuf *buffer, void *out);
 
 #define ringbuf_is_full(buf) (buf->len >= buf->cap)
-#define ringbuf_is_empty(buf) (buf->len > 0)
+#define ringbuf_is_empty(buf) (buf->len == 0)
 
 #endif
