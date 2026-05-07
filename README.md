@@ -5,6 +5,19 @@
 <br />
 <br />
 
+## How it works
+
+Redic is a from-scratch Redis-compatible server written in C. It speaks the [RESP protocol](https://redis.io/docs/latest/develop/reference/protocol-spec/), accepts concurrent client connections (one thread per client), parses incoming commands against declarative argument schemas, and dispatches them to a single-threaded data store.
+
+### Actor pattern & serializability
+
+The data layer uses an actor pattern to guarantee serializable access without locks. All reads and writes go through a message-passing pipeline rather than touching shared memory directly:
+
+- **Sewer** — a channel backed by a ring buffer that passes poop (messages) from client threads down to the data store. Client threads push an operation in and block until they get a response back through a per-request reply channel.
+- **Septic Tank** — where all the poop ends up. A single-threaded actor that drains the sewer one message at a time, executes the operation against the in-memory hashmap, and flushes the result back to the caller.
+
+Because the septic tank is the only thread that ever touches the data, there are no data races and no mutexes needed.
+
 ## Running locally
 - Make sure you have `make` and any **C** compiler installed on your system.
 - Run `git clone git@github.com:WinterCore/redic.git && cd redic`
