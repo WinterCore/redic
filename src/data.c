@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <assert.h>
 
 #include "./data.h"

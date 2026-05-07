@@ -2,6 +2,7 @@
 #define RING_H
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdbool.h>
 
 typedef struct RingBuf {

@@ -1,3 +1,5 @@
+#include <time.h>
+
 #include "septic_tank_operation.h"
 
 SepticTankResult *septic_tank_ttl(SepticTank *tank, Arena *result_arena, SepticTankTtlOperation *op) {

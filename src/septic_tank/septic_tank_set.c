@@ -1,4 +1,3 @@
-#include <_string.h>
 #include <string.h>
 
 #include "septic_tank.h"

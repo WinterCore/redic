@@ -1,5 +1,5 @@
 OS := $(shell uname)
-CFLAGS = -std=c11 -Wall -Wextra
+CFLAGS = -std=c11 -Wall -Wextra -D_POSIX_C_SOURCE=200809L
 
 .PHONY: clean debug all
 
