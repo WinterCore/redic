@@ -49,10 +49,11 @@ bool data_is_expired(DataEntry *entry) {
         return false;
     }
 
-    time_t expires_at = entry->expires_at.value;
-    time_t now = time(NULL);
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    int64_t now_ms = (int64_t) ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
 
-    return expires_at <= now;
+    return entry->expires_at.value <= now_ms;
 }
 
 void data_destroy_entry(DataEntry *entry) {

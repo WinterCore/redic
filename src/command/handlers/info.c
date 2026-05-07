@@ -13,6 +13,8 @@ CommandDefinition INFO_COMMAND = COMMAND(
 RESPValue process_info(Arena *arena, Server *server, CommandArg **args) {
     char *info = arena_alloc(arena, 1000);
 
+    UNUSED(args);
+
     size_t n;
     
     if (! server->maybe_master.is_present) {

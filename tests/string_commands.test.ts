@@ -1,6 +1,6 @@
 // test.ts
-import { connect } from "jsr:@db/redis@0.35.6";
-import { assertEquals, assertExists } from "jsr:@std/assert@1.0.13";
+import { connect } from "@db/redis";
+import { assertEquals, assertExists } from "@std/assert";
 
 async function makeRedis() {
   return await connect({ hostname: "127.0.0.1", port: 6969 });
@@ -87,7 +87,7 @@ Deno.test("set GET on missing key returns null", async () => {
   redis.close();
 });
 
-Deno.test.ignore("set EX - key expires after seconds", async () => {
+Deno.test("set EX - key expires after seconds", async () => {
   const redis = await makeRedis();
   const key = rkey("ex");
 
@@ -104,7 +104,7 @@ Deno.test.ignore("set EX - key expires after seconds", async () => {
   redis.close();
 });
 
-Deno.test.ignore("set PX - key expires after milliseconds", async () => {
+Deno.test("set PX - key expires after milliseconds", async () => {
   const redis = await makeRedis();
   const key = rkey("px");
 
@@ -121,7 +121,7 @@ Deno.test.ignore("set PX - key expires after milliseconds", async () => {
   redis.close();
 });
 
-Deno.test.ignore("set KEEPTTL - preserves existing TTL", async () => {
+Deno.test("set KEEPTTL - preserves existing TTL", async () => {
   const redis = await makeRedis();
   const key = rkey("keepttl");
 

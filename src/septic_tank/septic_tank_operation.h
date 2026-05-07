@@ -1,15 +1,16 @@
 #ifndef SEPTIC_OPERATION_H
 #define SEPTIC_OPERATION_H
 
-#include <time.h>
 #include <stdbool.h>
+#include <inttypes.h>
+#include <stdint.h>
 
 #include "septic_tank.h"
 #include "../data.h"
 
 typedef struct SepticTankExpiration {
     enum { ST_EXPIRATION_NO_EXPIRE, ST_EXPIRATION_UNIX_TS, ST_EXPIRATION_KEEP_OLD } type;
-    time_t ts;
+    int64_t ts;
 } SepticTankExpiration;
 
 typedef struct SepticTankGetOperation {
@@ -26,9 +27,19 @@ typedef struct SepticTankSetOperation {
     SepticTankExpiration expiration;
 } SepticTankSetOperation;
 
+typedef struct SepticTankDelOperation {
+    char *key;
+} SepticTankDelOperation;
+
+typedef struct SepticTankTtlOperation {
+    char *key;
+} SepticTankTtlOperation;
+
 typedef enum SepticTankOperationType {
     SEPTIC_TANK_SET,
     SEPTIC_TANK_GET,
+    SEPTIC_TANK_DEL,
+    SEPTIC_TANK_TTL,
 } SepticTankOperationType;
 
 typedef struct SepticTankOperation {
@@ -40,6 +51,8 @@ typedef struct SepticTankOperation {
     union { 
         SepticTankSetOperation set;
         SepticTankGetOperation get;
+        SepticTankDelOperation del;
+        SepticTankTtlOperation ttl;
     };
 } SepticTankOperation;
 
@@ -51,11 +64,21 @@ typedef struct SepticTankSetResult {
     DataString *old_value;
 } SepticTankSetResult;
 
+typedef struct SepticTankDelResult {
+    uint32_t num_deleted;
+} SepticTankDelResult;
+
+typedef struct SepticTankTtlResult {
+    int64_t ttl_s;  // -1 = key exists but has no expiry, -2 = key does not exist
+} SepticTankTtlResult;
+
 typedef struct SepticTankResult {
     SepticTankOperationType type;
     union { 
         SepticTankSetResult set_result;
         SepticTankGetResult get_result;
+        SepticTankDelResult del_result;
+        SepticTankTtlResult ttl_result;
     };
 
     bool success;
@@ -70,5 +93,7 @@ SepticTankResult *septic_tank_feed(
 
 SepticTankResult *septic_tank_set(SepticTank *tank, Arena *result_arena, SepticTankSetOperation *op);
 SepticTankResult *septic_tank_get(SepticTank *tank, Arena *result_arena, SepticTankGetOperation *op);
+SepticTankResult *septic_tank_del(SepticTank *tank, Arena *result_arena, SepticTankDelOperation *op);
+SepticTankResult *septic_tank_ttl(SepticTank *tank, Arena *result_arena, SepticTankTtlOperation *op);
 
 #endif

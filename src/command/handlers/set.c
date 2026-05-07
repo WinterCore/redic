@@ -1,5 +1,6 @@
 #include <pthread.h>
 #include <string.h>
+#include <time.h>
 #include <inttypes.h>
 
 #include "../../sewer.h"
@@ -37,52 +38,48 @@ CommandDefinition SET_COMMAND = COMMAND(
     process_set
 );
 
-typedef struct ExpiryTime {
-    enum { EXPIRY_DOESNT_EXPIRE, EXPIRY_UNIX_TS, EXPIRY_KEEP_OLD } type;
-
-    time_t ts;
-} ExpiryTime;
-
-ExpiryTime get_expire_time(CommandArg *arg) {
+SepticTankExpiration get_expire_time(CommandArg *arg) {
     Option *option = arg->value;
 
     if (! option->is_present) {
-        return (ExpiryTime) { .ts = EXPIRY_DOESNT_EXPIRE };
+        return (SepticTankExpiration) { .ts = ST_EXPIRATION_NO_EXPIRE };
     }
     
-    time_t time_s = time(NULL);
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    int64_t now_ms = (int64_t) ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
 
     if (strcmp(arg->definition->name, "seconds") == 0) {
-        int64_t ms = *((int64_t *) option->value);
+        int64_t s = *((int64_t *) option->value);
 
-        return (ExpiryTime) {
-            .type = EXPIRY_UNIX_TS,
-            .ts = time_s + ms,
+        return (SepticTankExpiration) {
+            .type = ST_EXPIRATION_UNIX_TS,
+            .ts = now_ms + s * 1000,
         };
     } else if (strcmp(arg->definition->name, "milliseconds") == 0) {
-        int64_t ms = *((int64_t *) option->value) / 1000;
+        int64_t ms = *((int64_t *) option->value);
 
-        return (ExpiryTime) {
-            .type = EXPIRY_UNIX_TS,
-            .ts = time_s + ms,
+        return (SepticTankExpiration) {
+            .type = ST_EXPIRATION_UNIX_TS,
+            .ts = now_ms + ms,
         };
     } else if (strcmp(arg->definition->name, "unix-time-seconds") == 0) {
-        int64_t ts = *((int64_t *) option->value);
+        int64_t unix_s = *((int64_t *) option->value);
 
-        return (ExpiryTime) {
-            .type = EXPIRY_UNIX_TS,
-            .ts = ts,
+        return (SepticTankExpiration) {
+            .type = ST_EXPIRATION_UNIX_TS,
+            .ts = unix_s * 1000,
         };
     } else if (strcmp(arg->definition->name, "unix-time-milliseconds") == 0) {
-        int64_t ts = *((int64_t *) option->value) / 1000;
+        int64_t unix_ms = *((int64_t *) option->value);
 
-        return (ExpiryTime) {
-            .type = EXPIRY_UNIX_TS,
-            .ts = ts,
+        return (SepticTankExpiration) {
+            .type = ST_EXPIRATION_UNIX_TS,
+            .ts = unix_ms,
         };
     } else if (strcmp(arg->definition->name, "keepttl") == 0) {
-        return (ExpiryTime) {
-            .type = EXPIRY_KEEP_OLD,
+        return (SepticTankExpiration) {
+            .type = ST_EXPIRATION_KEEP_OLD,
         };
     }
 
@@ -101,13 +98,13 @@ RESPValue process_set(Arena *arena, Server *server, CommandArg **args) {
     bool get = ((Option *) args[3]->value)->is_present;
 
     CommandArg *expiration = args[4];
-    ExpiryTime expiry_time = get_expire_time(expiration);
+    SepticTankExpiration expiry_time = get_expire_time(expiration);
     
     SepticTankOperation *operation = arena_alloc(arena, sizeof(SepticTankOperation));
     operation->arena = arena;
     operation->type = SEPTIC_TANK_SET;
     operation->set = (SepticTankSetOperation) {
-        .expiration = { .type = ST_EXPIRATION_NO_EXPIRE },
+        .expiration = expiry_time,
         .get = get,
         .xx = xx,
         .nx = nx,
@@ -125,7 +122,6 @@ RESPValue process_set(Arena *arena, Server *server, CommandArg **args) {
 
         return resp_create_null_value(arena);
     }
-
 
     if (get) {
         if (result->set_result.old_value != NULL) {

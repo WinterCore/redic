@@ -27,10 +27,10 @@
 - [x] `INFO` (replication section)
 - [x] TTL stored per key with lazy expiry on access
 - [x] Actor pattern for data layer — single-threaded data store (septic tank) with lock-free reads/writes via message-passing (sewer channels + ring buffer)
-- [ ] `DEL key [key ...]` — delete one or more keys, returns the count of keys removed
+- [x] `DEL key [key ...]` — delete one or more keys, returns the count of keys removed
 - [ ] `EXISTS key [key ...]` — returns how many of the given keys exist
 - [ ] `EXPIRE key seconds` — set a timeout on a key after which it is automatically deleted
-- [ ] `TTL key` — return the remaining time to live of a key in seconds
+- [x] `TTL key` — return the remaining time to live of a key in seconds
 - [ ] `INCR` / `DECR` / `INCRBY` / `DECRBY` — atomically increment or decrement an integer stored as a string
 - [ ] `APPEND key value` — append a string to an existing value, creating the key if it doesn't exist
 - [ ] `MGET key [key ...]` — get the values of multiple keys in a single command

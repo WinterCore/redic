@@ -30,6 +30,14 @@ void septic_tank_digest(SepticTank *tank, SewerMessage *message) {
             result = septic_tank_set(tank, operation->arena, &operation->set);
             break;
         }
+        case SEPTIC_TANK_DEL: {
+            result = septic_tank_del(tank, operation->arena, &operation->del);
+            break;
+        }
+        case SEPTIC_TANK_TTL: {
+            result = septic_tank_ttl(tank, operation->arena, &operation->ttl);
+            break;
+        }
         default:
             UNIMPLEMENTED("Unknown digest operation %d", operation->type);
     }

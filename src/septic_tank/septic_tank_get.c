@@ -13,6 +13,15 @@ SepticTankResult *septic_tank_get(SepticTank *tank, Arena *result_arena, SepticT
         return result;
     }
 
+    if (data_is_expired(entry)) {
+        result->success = true;
+        result->get_result.value = NULL;
+        hashmap_remove(tank->data, op->key);
+        data_destroy_entry(entry);
+
+        return result;
+    }
+
     if (entry->type != DATA_STRING) {
         result->success = false;
         result->error = "WRONGTYPE Operation against a key holding the wrong kind of value";

@@ -66,7 +66,7 @@ Option *option_create(Arena *arena, void *value);
 
 #define optional_type(type) struct { bool is_present; type value; }
 
-typedef optional_type(time_t) OptionTime;
+typedef optional_type(int64_t) OptionTime;
 
 
 /**

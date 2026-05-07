@@ -160,8 +160,6 @@ CommandArgParseResult parse_argument(
             char *endptr;
             *num = strtoll(arg->data, &endptr, 10);
 
-            DEBUG_PRINT("Wot is this %ld", endptr - arg->data);
-
             if ((uint64_t) (endptr - arg->data) != arg->length) {
                 return CMD_ARGS_TYPE_MISMATCH;
             }
@@ -186,7 +184,7 @@ CommandArgParseResult parse_argument(
             iaa_consume_arg(iaa, 0);
 
             // TODO: error handling
-            int64_t *num = arena_alloc(arena, sizeof(int64_t));
+            double *num = arena_alloc(arena, sizeof(double));
             *num = strtod(arg->data, NULL);
 
             *value = num;
@@ -210,7 +208,6 @@ CommandArgParseResult parse_argument(
 
             long long int *num = arena_alloc(arena, sizeof(long long int));
             *num = strtoll(arg->data, NULL, 10);
-            DEBUG_PRINT("UNIX TS: %lld", *num);
 
             *value = num;
 

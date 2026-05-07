@@ -46,7 +46,7 @@ void *handle_client_socket(void *_handler_input) {
             break;
         }
 
-        DEBUG_PRINT("Read %ld bytes", bytes_read);
+        // DEBUG_PRINT("Read %ld bytes", bytes_read);
 
         RESPValue value = {0};
 
@@ -61,7 +61,7 @@ void *handle_client_socket(void *_handler_input) {
 
 
         // TODO: Handle write error
-        DEBUG_PRINT("%s", buffer);
+        // DEBUG_PRINT("%s", buffer);
         write(handler_input->socket_fd, buffer, serialized_len);
 
         arena_reset(arena);
