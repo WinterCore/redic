@@ -13,7 +13,6 @@ SepticTankResult *septic_tank_del(SepticTank *tank, Arena *result_arena, SepticT
 
     if (get_result == MAP_OK && !data_is_expired(entry)) {
         hashmap_remove(tank->data, op->key);
-        data_destroy_entry(entry);
         result->del_result.num_deleted = 1;
     }
 

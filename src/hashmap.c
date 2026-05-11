@@ -24,12 +24,13 @@ typedef struct _hashmap_map{
 	int size;
 	hashmap_element *data;
 	hashmap_free_key_fn free_key;
+	hashmap_free_value_fn free_value;
 } hashmap_map;
 
 /*
  * Return an empty hashmap, or NULL on failure.
  */
-map_t hashmap_new_with_free(hashmap_free_key_fn free_key) {
+map_t hashmap_new_with_free(hashmap_free_key_fn free_key, hashmap_free_value_fn free_value) {
 	hashmap_map* m = (hashmap_map*) malloc(sizeof(hashmap_map));
 	if(!m) goto err;
 
@@ -39,6 +40,7 @@ map_t hashmap_new_with_free(hashmap_free_key_fn free_key) {
 	m->table_size = INITIAL_SIZE;
 	m->size = 0;
 	m->free_key = free_key;
+	m->free_value = free_value;
 
 	return m;
 	err:
@@ -48,7 +50,7 @@ map_t hashmap_new_with_free(hashmap_free_key_fn free_key) {
 }
 
 map_t hashmap_new() {
-	return hashmap_new_with_free(NULL);
+	return hashmap_new_with_free(NULL, NULL);
 }
 
 /* The implementation here was originally done by Gary S. Brown.  I have
@@ -280,11 +282,18 @@ int hashmap_put(map_t in, char* key, any_t value){
 		index = hashmap_hash(in, key);
 	}
 
+	/* Free old key/value if overwriting an existing entry */
+	if (m->data[index].in_use) {
+		if (m->free_key) m->free_key(m->data[index].key);
+		if (m->free_value) m->free_value(m->data[index].data);
+	} else {
+		m->size++;
+	}
+
 	/* Set the data */
 	m->data[index].data = value;
 	m->data[index].key = key;
 	m->data[index].in_use = 1;
-	m->size++; 
 
 	return MAP_OK;
 }
@@ -373,6 +382,7 @@ int hashmap_remove(map_t in, char* key){
             if (strcmp(m->data[curr].key,key)==0){
                 /* Blank out the fields */
                 if (m->free_key) m->free_key(m->data[curr].key);
+                if (m->free_value) m->free_value(m->data[curr].data);
                 m->data[curr].in_use = 0;
                 m->data[curr].data = NULL;
                 m->data[curr].key = NULL;
@@ -392,10 +402,11 @@ int hashmap_remove(map_t in, char* key){
 /* Deallocate the hashmap */
 void hashmap_free(map_t in){
 	hashmap_map* m = (hashmap_map*) in;
-	if (m->free_key) {
+	if (m->free_key || m->free_value) {
 		for (int i = 0; i < m->table_size; i++) {
 			if (m->data[i].in_use) {
-				m->free_key(m->data[i].key);
+				if (m->free_key) m->free_key(m->data[i].key);
+				if (m->free_value) m->free_value(m->data[i].data);
 			}
 		}
 	}

@@ -49,23 +49,34 @@ Option *option_create(Arena *arena, void *value) {
 
 
 Hector *hector_create(Arena *arena, size_t elem_size, size_t init_size) {
-    // TODO: Check for malloc errors
-    Hector *hector = (Hector*) arena_alloc(arena, sizeof(Hector));
+    Hector *hector = arena != NULL
+        ? arena_alloc(arena, sizeof(Hector))
+        : malloc(sizeof(Hector));
     hector->elem_size = elem_size;
     hector->length = 0;
     hector->capacity = init_size;
-    void *mem = arena_alloc(arena, elem_size * init_size);
-    hector->mem = mem;
+    hector->arena = arena;
+    hector->mem = arena != NULL
+        ? arena_alloc(arena, elem_size * init_size)
+        : malloc(elem_size * init_size);
 
     return hector;
 }
 
+static void hector_resize(Hector *hec, size_t new_capacity) {
+    if (hec->arena != NULL) {
+        void *new_mem = arena_alloc(hec->arena, new_capacity * hec->elem_size);
+        memcpy(new_mem, hec->mem, hec->length * hec->elem_size);
+        hec->mem = new_mem;
+    } else {
+        hec->mem = realloc(hec->mem, new_capacity * hec->elem_size);
+    }
+    hec->capacity = new_capacity;
+}
 
 void hector_push(Hector *hec, void *item) {
     if (hec->capacity == hec->length) {
-        int new_capacity = hec->capacity * 2;
-        hec->mem = realloc(hec->mem, new_capacity * hec->elem_size);
-        hec->capacity = new_capacity;
+        hector_resize(hec, hec->capacity * 2);
     }
 
     memcpy(
@@ -78,9 +89,7 @@ void hector_push(Hector *hec, void *item) {
 
 void try_shrink(Hector *hec) {
     if (hec->length < hec->capacity / 3) {
-        int new_capacity = hec->capacity / 2;
-        hec->mem = realloc(hec->mem, new_capacity * hec->elem_size);
-        hec->capacity = new_capacity;
+        hector_resize(hec, hec->capacity / 2);
     }
 }
 
@@ -119,6 +128,9 @@ size_t hector_size(Hector *hec) {
 }
 
 void hector_destroy(Hector *hec) {
+    if (hec->arena != NULL) {
+        return;
+    }
     free(hec->mem);
     free(hec);
 }
@@ -126,6 +138,14 @@ void hector_destroy(Hector *hec) {
 char *clone_string(Arena *arena, size_t str_len, char *str) {
     char *copy = arena_alloc(arena, str_len);
     memcpy(copy, str, str_len);
+
+    return copy;
+}
+
+char *clone_cstr(Arena *arena, const char *str) {
+    size_t len = strlen(str) + 1;
+    char *copy = arena != NULL ? arena_alloc(arena, len) : malloc(len);
+    memcpy(copy, str, len);
 
     return copy;
 }

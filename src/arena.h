@@ -4,8 +4,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define ARENA_PAGE_SIZE 4096
-
 typedef struct Arena {
     uint8_t *data;
     size_t size;

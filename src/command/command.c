@@ -78,7 +78,7 @@ RESPValue process_command(Arena *arena, Server *server, RESPValue *input) {
         RESPArray *array = input->value;
 
         if (! is_valid_bulk_string_array_command(array)) {
-            UNIMPLEMENTED("Invalid command bulk string array %s", "");
+            UNIMPLEMENTED("Invalid command bulk string array");
         }
 
         RESPBulkString *command = ((RESPValue *) hector_get(array->array, 0))->value;
@@ -95,5 +95,5 @@ RESPValue process_command(Arena *arena, Server *server, RESPValue *input) {
     }
 
 
-    UNIMPLEMENTED("Inline command support %s", "");
+    UNIMPLEMENTED("Inline command support");
 }

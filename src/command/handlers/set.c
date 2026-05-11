@@ -83,7 +83,7 @@ SepticTankExpiration get_expire_time(CommandArg *arg) {
         };
     }
 
-    UNREACHABLE();
+    UNREACHABLE("");
 }
 
 RESPValue process_set(Arena *arena, Server *server, CommandArg **args) {
@@ -99,9 +99,11 @@ RESPValue process_set(Arena *arena, Server *server, CommandArg **args) {
 
     CommandArg *expiration = args[4];
     SepticTankExpiration expiry_time = get_expire_time(expiration);
+
+    Arena *message_arena = arena_create();
     
-    SepticTankOperation *operation = arena_alloc(arena, sizeof(SepticTankOperation));
-    operation->arena = arena;
+    SepticTankOperation *operation = arena_alloc(message_arena, sizeof(SepticTankOperation));
+    operation->response_arena = arena;
     operation->type = SEPTIC_TANK_SET;
     operation->set = (SepticTankSetOperation) {
         .expiration = expiry_time,
@@ -111,9 +113,9 @@ RESPValue process_set(Arena *arena, Server *server, CommandArg **args) {
         .key = key,
         .value = value,
     };
-    SewerMessage *message = sewer_message_create(arena, operation, true);
+    SewerMessage *message = sewer_message_create(message_arena, operation, true);
 
-    SepticTankResult *result = septic_tank_feed(arena, server->septic_tank_sewer, message);
+    SepticTankResult *result = septic_tank_feed(server->septic_tank_sewer, message);
 
     if (result->success == false) {
         if (result->error != NULL) {

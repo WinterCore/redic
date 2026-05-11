@@ -34,12 +34,14 @@ typedef int (*PFany)(any_t, any_t);
 typedef any_t map_t;
 
 typedef void (*hashmap_free_key_fn)(char *key);
+typedef void (*hashmap_free_value_fn)(any_t value);
 
 /*
  * Return an empty hashmap. Returns NULL if empty.
- * free_key is called on each key during remove/free. Pass NULL to skip.
+ * free_key is called on each key during put-overwrite/remove/free. Pass NULL to skip.
+ * free_value is called on each value during put-overwrite/remove/free. Pass NULL to skip.
 */
-extern map_t hashmap_new_with_free(hashmap_free_key_fn free_key);
+extern map_t hashmap_new_with_free(hashmap_free_key_fn free_key, hashmap_free_value_fn free_value);
 extern map_t hashmap_new();
 
 /*

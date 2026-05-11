@@ -154,7 +154,6 @@ static RESPParseResult parse_integer(Arena *arena, RESPParser *parser, RESPInteg
 
     CONSUME_TOKEN('\r', ptr, &pos);
     CONSUME_TOKEN('\n', ptr, &pos);
-    DEBUG_PRINT("within %zu", pos);
 
     parser->pos = pos;
 

@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
 
         server.maybe_master.is_present = true;
         server.maybe_master.value = socket_info;
-        DEBUG_PRINT("IP: %d", ((SocketInfo *) server.maybe_master.value)->ip.s_addr);
+        DEBUG_PRINTF("IP: %d\n", ((SocketInfo *) server.maybe_master.value)->ip.s_addr);
     }
 
     int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -101,10 +101,10 @@ int main(int argc, char **argv) {
     arg_defs[0].is_optional = false;
     arg_defs[1].type = ARG_TYPE_STRING;
     arg_defs[1].is_optional = false;
-    DEBUG_PRINT("PTR %zu", sizeof(CommandArgDefinition *));
-    DEBUG_PRINT("PTR %p", arg_defs);
-    DEBUG_PRINT("PTR %p", &arg_defs[0]);
-    DEBUG_PRINT("PTR %p", &arg_defs[1]);
+    DEBUG_PRINTF("PTR %zu\n", sizeof(CommandArgDefinition *));
+    DEBUG_PRINTF("PTR %p\n", arg_defs);
+    DEBUG_PRINTF("PTR %p\n", &arg_defs[0]);
+    DEBUG_PRINTF("PTR %p\n", &arg_defs[1]);
 
     RESPBulkString **input_args = arena_alloc(arena, sizeof(RESPBulkString *) * 0);
 
@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
         command_args
     );
 
-    UNIMPLEMENTED("TERMINATE %s", "");
+    UNIMPLEMENTED("TERMINATE");
     */
 
     if (socket_fd < 0) {
@@ -195,7 +195,7 @@ int main(int argc, char **argv) {
             PANIC("Failed to serialize client address");
         }
 
-        DEBUG_PRINT("server established connection with %s (%s) %d\n", hostp->h_name, host_addr, client_addr.sin_port);
+        DEBUG_PRINTF("server established connection with %s (%s) %d\n", hostp->h_name, host_addr, client_addr.sin_port);
 
         ClientSocketHandlerInput *handler_input = malloc(sizeof(ClientSocketHandlerInput));
         // TODO: Check for malloc errors
@@ -210,7 +210,7 @@ int main(int argc, char **argv) {
         pthread_create(&tid, &attr, handle_client_socket, handler_input);
         pthread_attr_destroy(&attr);
 
-        DEBUG_PRINT("Spawned thread %s", "");
+        DEBUG_PRINTF("Spawned thread\n");
     }
 
     return 0;

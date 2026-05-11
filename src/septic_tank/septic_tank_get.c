@@ -17,7 +17,6 @@ SepticTankResult *septic_tank_get(SepticTank *tank, Arena *result_arena, SepticT
         result->success = true;
         result->get_result.value = NULL;
         hashmap_remove(tank->data, op->key);
-        data_destroy_entry(entry);
 
         return result;
     }

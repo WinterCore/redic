@@ -114,7 +114,7 @@ bool cli_parse_opts(
                 break;
             }
             case CLI_FLOAT: {
-                UNIMPLEMENTED("CLI FLOAT OPT PARSING %s", "");
+                UNIMPLEMENTED("CLI FLOAT OPT PARSING");
             }
             default: {
                 UNIMPLEMENTED("UNKNOWN CLI ARG TYPE %d", def->type);

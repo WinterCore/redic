@@ -45,7 +45,7 @@ typedef enum SepticTankOperationType {
 typedef struct SepticTankOperation {
     // Used for allocating memory for values that will be passed
     // back
-    Arena *arena;
+    Arena *response_arena;
 
     SepticTankOperationType type;
     union { 
@@ -86,7 +86,6 @@ typedef struct SepticTankResult {
 } SepticTankResult;
 
 SepticTankResult *septic_tank_feed(
-    Arena *arena,
     Sewer *septic_tank_sewer,
     SewerMessage *message
 );
@@ -95,5 +94,17 @@ SepticTankResult *septic_tank_set(SepticTank *tank, Arena *result_arena, SepticT
 SepticTankResult *septic_tank_get(SepticTank *tank, Arena *result_arena, SepticTankGetOperation *op);
 SepticTankResult *septic_tank_del(SepticTank *tank, Arena *result_arena, SepticTankDelOperation *op);
 SepticTankResult *septic_tank_ttl(SepticTank *tank, Arena *result_arena, SepticTankTtlOperation *op);
+
+
+typedef struct SepticTankMutation {
+    SepticTankOperationType type;
+
+    union { 
+        SepticTankSetOperation set;
+        SepticTankDelOperation del;
+    };
+} SepticTankMutation;
+
+SepticTankMutation *septic_tank_mutation_clone(Arena *arena, SepticTankMutation *mutation);
 
 #endif

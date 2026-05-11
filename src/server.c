@@ -35,13 +35,13 @@ void *handle_client_socket(void *_handler_input) {
         ssize_t bytes_read = read(handler_input->socket_fd, buffer, sizeof(buffer));
 
         if (bytes_read == 0) {
-            DEBUG_PRINT("Connection was closed %s", "");
+            DEBUG_PRINTF("Connection was closed\n");
 
             break;
         }
 
         if (bytes_read < 0) {
-            DEBUG_PRINT("An error occurred while reading! %ld", bytes_read);
+            DEBUG_PRINTF("An error occurred while reading! %ld\n", bytes_read);
 
             break;
         }
@@ -67,6 +67,7 @@ void *handle_client_socket(void *_handler_input) {
         arena_reset(arena);
     }
 
+    arena_destroy(arena);
     free(handler_input);
 
     return NULL;

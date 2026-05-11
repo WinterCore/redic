@@ -18,13 +18,15 @@ CommandDefinition TTL_COMMAND = COMMAND(
 RESPValue process_ttl(Arena *arena, Server *server, CommandArg **args) {
     char *key = args[0]->value;
 
-    SepticTankOperation *operation = arena_alloc(arena, sizeof(SepticTankOperation));
-    operation->arena = arena;
+    Arena *message_arena = arena_create();
+
+    SepticTankOperation *operation = arena_alloc(message_arena, sizeof(SepticTankOperation));
+    operation->response_arena = arena;
     operation->type = SEPTIC_TANK_TTL;
     operation->ttl = (SepticTankTtlOperation) { .key = key };
-    SewerMessage *message = sewer_message_create(arena, operation, true);
+    SewerMessage *message = sewer_message_create(message_arena, operation, true);
 
-    SepticTankResult *result = septic_tank_feed(arena, server->septic_tank_sewer, message);
+    SepticTankResult *result = septic_tank_feed(server->septic_tank_sewer, message);
 
     if (result->success == false) {
         if (result->error != NULL) {

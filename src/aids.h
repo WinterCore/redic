@@ -29,13 +29,17 @@
             fflush(stderr); \
         }
 
-#define UNIMPLEMENTED(fmt, ...) \
-    printf("-----UNIMPLEMENTED---->: %s:%d:%s: " fmt "\n\n", __FILE__, __LINE__, __func__, __VA_ARGS__); \
+#define UNIMPLEMENTED(...) \
+    printf("-----UNIMPLEMENTED---->: %s:%d:%s: ", __FILE__, __LINE__, __func__); \
+    printf(__VA_ARGS__); \
+    printf("\n\n"); \
     fflush(stderr); \
     exit(-1);
 
-#define UNREACHABLE() \
+#define UNREACHABLE(...) \
     printf("-----UNREACHABLE---->: %s:%d:%s: \n\n", __FILE__, __LINE__, __func__); \
+    printf(__VA_ARGS__); \
+    printf("\n\n"); \
     fflush(stderr); \
     exit(-1);
 
@@ -78,6 +82,7 @@ typedef struct Hector {
     size_t length;
     size_t elem_size;
     void *mem;
+    Arena *arena;
 } Hector;
 
 Hector *hector_create(Arena *arena, size_t elem_size, size_t init_size);
@@ -91,6 +96,7 @@ void hector_destroy(Hector *hec);
 
 
 char *clone_string(Arena *arena, size_t str_len, char *str);
+char *clone_cstr(Arena *arena, const char *str);
 
 bool parse_long(char *str, long *value);
 

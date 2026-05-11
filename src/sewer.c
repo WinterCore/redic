@@ -1,5 +1,4 @@
 #include "sewer.h"
-#include "aids.h"
 #include "arena.h"
 #include "ring.h"
 #include <pthread.h>
@@ -11,13 +10,16 @@ Sewer *sewer_create(size_t cap) {
     pthread_mutex_init(&sewer->mutex, NULL);
     pthread_cond_init(&sewer->has_items, NULL);
     pthread_cond_init(&sewer->has_space, NULL);
-    sewer->buffer = ringbuf_create(cap, sizeof(SewerMessage));
+    sewer->buffer = ringbuf_create(cap, sizeof(SewerMessage *));
 
     return sewer;
 }
 
 void sewer_destroy(Sewer *sewer) {
     ringbuf_destroy(sewer->buffer);
+    pthread_mutex_destroy(&sewer->mutex);
+    pthread_cond_destroy(&sewer->has_items);
+    pthread_cond_destroy(&sewer->has_space);
     free(sewer);
 }
 
@@ -29,23 +31,27 @@ void sewer_send(Sewer *sewer, SewerMessage *message) {
         pthread_cond_wait(&sewer->has_space, &sewer->mutex);
     }
     
-    ringbuf_push(sewer->buffer, message);
+    ringbuf_push(sewer->buffer, &message);
     pthread_cond_signal(&sewer->has_items);
 
     pthread_mutex_unlock(&sewer->mutex); 
 }
 
-void sewer_consume(Sewer *sewer, SewerMessage *out_message) {
+SewerMessage *sewer_consume(Sewer *sewer) {
     pthread_mutex_lock(&sewer->mutex);
 
     while (ringbuf_is_empty(sewer->buffer)) {
         pthread_cond_wait(&sewer->has_items, &sewer->mutex);
     }
 
-    ringbuf_pop(sewer->buffer, out_message);
+    SewerMessage *out_message = NULL;
+
+    ringbuf_pop(sewer->buffer, &out_message);
     pthread_cond_signal(&sewer->has_space);
 
     pthread_mutex_unlock(&sewer->mutex);
+
+    return out_message;
 }
 
 SewerMessage *sewer_message_create(Arena *arena, void *value, bool with_response) {
@@ -53,6 +59,7 @@ SewerMessage *sewer_message_create(Arena *arena, void *value, bool with_response
         ? malloc(sizeof(SewerMessage))
         : arena_alloc(arena, sizeof(SewerMessage));
     
+    message->arena = arena;
     message->is_consumed = false;
     message->clogged_sewer = with_response
         ? sewer_create(1)
@@ -62,9 +69,10 @@ SewerMessage *sewer_message_create(Arena *arena, void *value, bool with_response
     return message;
 }
 
-void sewer_message_destroy(SewerMessage *message) {
-    if (message->clogged_sewer != NULL) {
+void sewer_message_destroy(SewerMessage *message, bool destroy_clogged_sewer) {
+    if (destroy_clogged_sewer && message->clogged_sewer != NULL) {
         sewer_destroy(message->clogged_sewer);
     }
-    free(message);
+
+    arena_destroy(message->arena);
 }

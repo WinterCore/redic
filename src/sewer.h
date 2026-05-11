@@ -20,15 +20,18 @@ typedef struct SewerMessage {
     // Response sewer, single use ONLY
     Sewer *clogged_sewer;
     bool is_consumed;
+
+    // Arena used to allocate the message and its contents
+    Arena *arena;
 } SewerMessage;
 
 Sewer *sewer_create(size_t cap);
 void sewer_destroy(Sewer *sewer);
 
 void sewer_send(Sewer *sewer, SewerMessage *message);
-void sewer_consume(Sewer *sewer, SewerMessage *out_message);
+SewerMessage *sewer_consume(Sewer *sewer);
 
 SewerMessage *sewer_message_create(Arena *arena, void *value, bool with_response);
-void sewer_message_destroy(SewerMessage *message);
+void sewer_message_destroy(SewerMessage *message, bool destroy_clogged_sewer);
 
 #endif

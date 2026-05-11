@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define ARENA_PAGE_SIZE 4096
+
 static Arena* _arena_create(size_t size) {
     uint8_t *data = malloc(size);
 
