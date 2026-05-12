@@ -15,13 +15,6 @@
 
 #define UNUSED(x) (void)(x)
 
-#define DEBUG_PRINT(fmt, ...) \
-        if (DEBUG_TEST) { \
-            fprintf(stderr, "-----DEBUG----> %s:%d:%s(): " fmt "\n\n", __FILE__, \
-                                __LINE__, __func__, __VA_ARGS__); \
-            fflush(stderr); \
-        }
-
 #define DEBUG_PRINTF(...) \
         if (DEBUG_TEST) { \
             fprintf(stderr, "-----DEBUG----> %s:%d:%s(): ", __FILE__,  __LINE__, __func__); \
@@ -36,9 +29,8 @@
     fflush(stderr); \
     exit(-1);
 
-#define UNREACHABLE(...) \
+#define UNREACHABLE() \
     printf("-----UNREACHABLE---->: %s:%d:%s: \n\n", __FILE__, __LINE__, __func__); \
-    printf(__VA_ARGS__); \
     printf("\n\n"); \
     fflush(stderr); \
     exit(-1);

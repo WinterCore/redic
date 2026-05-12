@@ -1,6 +1,7 @@
 #include <time.h>
 
 #include "septic_tank_operation.h"
+#include "septic_tank.h"
 
 SepticTankResult *septic_tank_ttl(SepticTank *tank, Arena *result_arena, SepticTankTtlOperation *op) {
     SepticTankResult *result = arena_alloc(result_arena, sizeof(SepticTankResult));

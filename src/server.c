@@ -14,6 +14,7 @@ Server create_server_instance() {
     Server server = {
         .arena = arena_create(),
         .septic_tank_sewer = sewer_create(100),
+        .potty_sewer = sewer_create(100),
         .maybe_master = (Option) { .is_present = false },
     };
 
@@ -52,8 +53,10 @@ void *handle_client_socket(void *_handler_input) {
 
         RESPParseResult result = resp_parse_input(arena, buffer, &value);
 
+        /*
         resp_print_parse_result(&result);
         resp_print_value(&value);
+        */
 
         RESPValue response_value = process_command(arena, handler_input->server, &value);
 

@@ -1,16 +1,18 @@
 #include <pthread.h>
 #include <stdlib.h>
 
-#include "./septic_tank.h"
+#include "septic_tank.h"
 #include "septic_tank_operation.h"
+#include "../potty/potty.h"
 
-SepticTank *septic_tank_create(Sewer *sewer) {
+SepticTank *septic_tank_create(Sewer *sewer, Potty *potty) {
     SepticTank *tank = malloc(sizeof(SepticTank));
     tank->data = hashmap_new_with_free(
         (hashmap_free_key_fn) free,
         (hashmap_free_value_fn) data_destroy_entry
     );
     tank->sewer = sewer;
+    tank->potty = potty;
 
     return tank;
 }
@@ -45,6 +47,8 @@ void septic_tank_digest(SepticTank *tank, SewerMessage *message) {
             UNIMPLEMENTED("Unknown digest operation %d", operation->type);
     }
 
+    bool succeeded = result->success;
+
     if (message->clogged_sewer) {
         SewerMessage *response_message = sewer_message_create(operation->response_arena, result, false);
 
@@ -52,6 +56,12 @@ void septic_tank_digest(SepticTank *tank, SewerMessage *message) {
         // We'd end up with lots of poo poo
         sewer_send(message->clogged_sewer, response_message);
         response_message->is_consumed = true;
+    }
+
+    if (succeeded && septic_tank_operation_is_mutation(operation->type)) {
+        SepticTankMutation mutation = septic_tank_mutation_from_operation(operation);
+
+        potty_feed(tank->potty, &mutation);
     }
 }
 
@@ -67,9 +77,7 @@ void *septic_tank_pump(void *input) {
     }
 }
 
-pthread_t septic_tank_launch(Sewer *sewer) {
-    SepticTank *tank = septic_tank_create(sewer);
-
+pthread_t septic_tank_launch(SepticTank *tank) {
     pthread_t tid;
     pthread_attr_t attr;
     pthread_attr_init(&attr);

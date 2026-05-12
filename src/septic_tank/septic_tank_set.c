@@ -33,12 +33,10 @@ SepticTankResult *septic_tank_set(SepticTank *tank, Arena *result_arena, SepticT
             (op->xx && get_result == MAP_MISSING)
         ) {
             if (op->get && old_entry != NULL) {
-                result->success = true;
                 DataString *old_value = data_unwrap_string(old_entry);
                 result->set_result.old_value = data_copy_string_arena(result_arena, old_value);
             }
 
-            result->success = false;
             return result;
         }
     }
@@ -61,7 +59,7 @@ SepticTankResult *septic_tank_set(SepticTank *tank, Arena *result_arena, SepticT
             }
             break;
         default:
-            UNREACHABLE("");
+            UNREACHABLE();
     }
 
     // Snapshot old value before hashmap_put auto-frees the old entry
@@ -73,6 +71,7 @@ SepticTankResult *septic_tank_set(SepticTank *tank, Arena *result_arena, SepticT
     DataEntry *entry = data_create_string_entry(expires_at, strlen(op->value), op->value);
     char *key = strdup(op->key);
     hashmap_put(tank->data, key, entry);
+
     result->success = true;
 
     return result;

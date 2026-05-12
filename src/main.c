@@ -12,6 +12,7 @@
 #include "./resp/resp.h"
 #include "./command/command.h"
 #include "arena.h"
+#include "potty/potty.h"
 #include "ring.h"
 #include "septic_tank/septic_tank.h"
 #include "server.h"
@@ -91,37 +92,6 @@ int main(int argc, char **argv) {
 
     int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 
-    
-
-    /*
-    Arena *arena = arena_create();
-    
-    CommandArgDefinition *arg_defs = arena_alloc(arena, sizeof(CommandArgDefinition) * 0);
-    arg_defs[0].type = ARG_TYPE_STRING;
-    arg_defs[0].is_optional = false;
-    arg_defs[1].type = ARG_TYPE_STRING;
-    arg_defs[1].is_optional = false;
-    DEBUG_PRINTF("PTR %zu\n", sizeof(CommandArgDefinition *));
-    DEBUG_PRINTF("PTR %p\n", arg_defs);
-    DEBUG_PRINTF("PTR %p\n", &arg_defs[0]);
-    DEBUG_PRINTF("PTR %p\n", &arg_defs[1]);
-
-    RESPBulkString **input_args = arena_alloc(arena, sizeof(RESPBulkString *) * 0);
-
-    CommandArg *command_args = arena_alloc(arena, sizeof(CommandArg) * 0);
-
-    parse_command_arguments(
-        arena,
-        2,
-        &arg_defs,
-        0,
-        input_args,
-        command_args
-    );
-
-    UNIMPLEMENTED("TERMINATE");
-    */
-
     if (socket_fd < 0) {
         PANIC("Failed to create server socket");
     }
@@ -165,7 +135,10 @@ int main(int argc, char **argv) {
     struct sockaddr_in client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
 
-    septic_tank_launch(server.septic_tank_sewer);
+    Potty *potty = potty_create(server.potty_sewer);
+    SepticTank *tank = septic_tank_create(server.septic_tank_sewer, potty);
+    septic_tank_launch(tank);
+    potty_launch(potty);
 
     while (1) {
         int client_fd = accept(

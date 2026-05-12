@@ -46,22 +46,27 @@ void potty_destroy(Potty *potty) {
     */
 }
 
+void potty_poop(Potty *potty, SepticTankMutation *mutation) {
+    UNUSED(potty);
+    DEBUG_PRINTF("Received mutation %d\nTotal operations: %zu\n", mutation->type, hector_size(potty->waste));
+
+    SepticTankMutation *cloned_mutation = septic_tank_mutation_clone(potty->arena, mutation);
+
+    hector_push(potty->waste, cloned_mutation);
+}
+
 void *potty_pump(void *input) {
     Potty *potty = input;
-    SewerMessage *message = malloc(sizeof(SewerMessage));
     
     // Poop indefinitely...
     while (1) {
-        sewer_consume(potty->sewer, message);
+        SewerMessage *message = sewer_consume(potty->sewer);
         potty_poop(potty, message->value);
+        sewer_message_destroy(message, true);
     }
-
-    free(message);
 }
 
-pthread_t potty_launch(Sewer *sewer) {
-    Potty *potty = potty_create(sewer);
-
+pthread_t potty_launch(Potty *potty) {
     pthread_t tid;
     pthread_attr_t attr;
     pthread_attr_init(&attr);
@@ -74,6 +79,12 @@ pthread_t potty_launch(Sewer *sewer) {
 }
 
 
-void potty_poop(Potty *potty, SepticTankMutation *mutation) {
+void potty_feed(Potty *potty, SepticTankMutation *mutation) {
+    Arena *message_arena = arena_create();
+    SepticTankMutation *cloned_mutation = septic_tank_mutation_clone(message_arena, mutation);
 
+    SewerMessage *message = sewer_message_create(message_arena, cloned_mutation, false);
+
+    // Send
+    sewer_send(potty->sewer, message);
 }

@@ -81,7 +81,7 @@ void hector_push(Hector *hec, void *item) {
 
     memcpy(
         hec->mem + (hec->length * hec->elem_size),
-        &item,
+        item,
         hec->elem_size
     );
     hec->length += 1;
@@ -120,7 +120,7 @@ void hector_splice(Hector *hec, size_t n, size_t count) {
 }
 
 void *hector_get(Hector *hec, size_t n) {
-    return *(void **)(hec->mem + (hec->elem_size * n));
+    return hec->mem + (hec->elem_size * n);
 }
 
 size_t hector_size(Hector *hec) {
@@ -136,8 +136,9 @@ void hector_destroy(Hector *hec) {
 }
 
 char *clone_string(Arena *arena, size_t str_len, char *str) {
-    char *copy = arena_alloc(arena, str_len);
+    char *copy = arena_alloc(arena, str_len + 1);
     memcpy(copy, str, str_len);
+    copy[str_len] = '\0';
 
     return copy;
 }

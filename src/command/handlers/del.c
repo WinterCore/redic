@@ -1,6 +1,6 @@
-#include "../../sewer.h"
 #include "../../septic_tank/septic_tank_operation.h"
 #include "../command.h"
+#include <string.h>
 
 RESPValue process_del(Arena *arena, Server *server, CommandArg **args);
 
@@ -16,22 +16,17 @@ CommandDefinition DEL_COMMAND = COMMAND(
 RESPValue process_del(Arena *arena, Server *server, CommandArg **args) {
     char *key = args[0]->value;
 
-    Arena *message_arena = arena_create();
+    SepticTankOperation operation = {};
+    operation.response_arena = arena;
+    operation.type = SEPTIC_TANK_DEL;
+    operation.del = (SepticTankDelOperation) { .key = key };
 
-    SepticTankOperation *operation = arena_alloc(message_arena, sizeof(SepticTankOperation));
-    operation->response_arena = arena;
-    operation->type = SEPTIC_TANK_DEL;
-    operation->del = (SepticTankDelOperation) { .key = key };
-    SewerMessage *message = sewer_message_create(message_arena, operation, true);
-
-    SepticTankResult *result = septic_tank_feed(server->septic_tank_sewer, message);
+    SepticTankResult *result = septic_tank_feed(server->septic_tank_sewer, &operation);
 
     if (result->success == false) {
         if (result->error != NULL) {
             return resp_create_simple_error_value(arena, result->error);
         }
-
-        return resp_create_null_value(arena);
     }
 
     return resp_create_integer_value(arena, result->del_result.num_deleted);

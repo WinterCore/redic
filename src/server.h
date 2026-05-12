@@ -22,6 +22,7 @@ typedef struct Server {
     Arena *arena;
 
     Sewer *septic_tank_sewer;
+    Sewer *potty_sewer;
     
     /**
      * The master this replica is connected to (only applies to replicas)

@@ -15,8 +15,19 @@ The data layer uses an actor pattern to guarantee serializable access without lo
 
 - **Sewer** — a channel backed by a ring buffer that passes poop (messages) from client threads down to the data store. Client threads push an operation in and block until they get a response back through a per-request reply channel.
 - **Septic Tank** — where all the poop ends up. A single-threaded actor that drains the sewer one message at a time, executes the operation against the in-memory hashmap, and flushes the result back to the caller.
+- **Potty** — a dedicated persistence actor for write mutations (`SET`, `DEL`). Successful mutations are forwarded from the septic tank to potty in the same operation order so they can be written as an append-only stream for recovery.
 
 Because the septic tank is the only thread that ever touches the data, there are no data races and no mutexes needed.
+
+### Potty (AOF path)
+
+Potty is Redic's append-only persistence path (Redis-style AOF direction):
+
+- The septic tank executes commands first, then forwards only successful mutations to potty.
+- Potty receives mutation payloads (`SepticTankMutation`) through its own sewer channel.
+- This keeps persistence ordering consistent with in-memory write ordering because both are driven by the single septic tank actor.
+
+Current status: potty scaffolding and mutation routing are implemented; on-disk flush/replay logic is still in progress.
 
 ## Running locally
 - Make sure you have `make` and any **C** compiler installed on your system.
@@ -57,7 +68,7 @@ Because the septic tank is the only thread that ever touches the data, there are
   - [ ] Lists (`LPUSH`, `RPUSH`, `LPOP`, `RPOP`, `LRANGE`)
   - [ ] Hashes (`HSET`, `HGET`, `HGETALL`, `HDEL`)
   - [ ] Sets (`SADD`, `SREM`, `SMEMBERS`, `SISMEMBER`)
-- [ ] AOF persistence — append each write command to a log file and replay it on startup; tradeoffs around fsync frequency and log compaction
+- [ ] AOF persistence — potty actor/mutation routing exists; still need durable flush format, fsync policy, startup replay, and compaction
 - [ ] Replication — replica handshake (`PING` → `REPLCONF` → `PSYNC`), full resync on connect, partial resync via replication backlog after reconnect
 - [ ] Transactions — `MULTI` / `EXEC` / `DISCARD` with `WATCH` for optimistic locking
 - [ ] Pub/Sub — `SUBSCRIBE` / `PUBLISH` / `UNSUBSCRIBE` with fan-out to blocking subscribers

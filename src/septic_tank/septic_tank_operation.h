@@ -5,8 +5,10 @@
 #include <inttypes.h>
 #include <stdint.h>
 
-#include "septic_tank.h"
 #include "../data.h"
+#include "../sewer.h"
+
+typedef struct SepticTank SepticTank;
 
 typedef struct SepticTankExpiration {
     enum { ST_EXPIRATION_NO_EXPIRE, ST_EXPIRATION_UNIX_TS, ST_EXPIRATION_KEEP_OLD } type;
@@ -36,11 +38,18 @@ typedef struct SepticTankTtlOperation {
 } SepticTankTtlOperation;
 
 typedef enum SepticTankOperationType {
+    // Mutations
     SEPTIC_TANK_SET,
-    SEPTIC_TANK_GET,
     SEPTIC_TANK_DEL,
+
+    SEPTIC_TANK_GET,
     SEPTIC_TANK_TTL,
 } SepticTankOperationType;
+
+/**
+ * Returns true when operation type represents a persisted mutation (SET/DEL).
+ */
+bool septic_tank_operation_is_mutation(SepticTankOperationType type);
 
 typedef struct SepticTankOperation {
     // Used for allocating memory for values that will be passed
@@ -85,14 +94,34 @@ typedef struct SepticTankResult {
     char *error;
 } SepticTankResult;
 
+/**
+ * Sends an operation to the septic tank actor and blocks for a response.
+ * The operation is cloned into a message-owned arena before enqueueing.
+ * Returned result memory is allocated from `operation->response_arena`.
+ */
 SepticTankResult *septic_tank_feed(
     Sewer *septic_tank_sewer,
-    SewerMessage *message
+    SepticTankOperation *operation
 );
 
+/**
+ * Executes SET semantics against the tank and returns a typed result.
+ */
 SepticTankResult *septic_tank_set(SepticTank *tank, Arena *result_arena, SepticTankSetOperation *op);
+
+/**
+ * Executes GET semantics against the tank and returns a typed result.
+ */
 SepticTankResult *septic_tank_get(SepticTank *tank, Arena *result_arena, SepticTankGetOperation *op);
+
+/**
+ * Executes DEL semantics against the tank and returns a typed result.
+ */
 SepticTankResult *septic_tank_del(SepticTank *tank, Arena *result_arena, SepticTankDelOperation *op);
+
+/**
+ * Executes TTL semantics against the tank and returns a typed result.
+ */
 SepticTankResult *septic_tank_ttl(SepticTank *tank, Arena *result_arena, SepticTankTtlOperation *op);
 
 
@@ -105,6 +134,15 @@ typedef struct SepticTankMutation {
     };
 } SepticTankMutation;
 
+/**
+ * Deep-clones a mutation payload into `arena` for async persistence/replay paths.
+ */
 SepticTankMutation *septic_tank_mutation_clone(Arena *arena, SepticTankMutation *mutation);
+
+/**
+ * Derives a mutation payload from a write operation (SET/DEL) using shallow
+ * field copies into a new `SepticTankMutation` allocated in `arena`.
+ */
+SepticTankMutation septic_tank_mutation_from_operation(SepticTankOperation *operation);
 
 #endif

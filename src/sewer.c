@@ -1,4 +1,5 @@
 #include "sewer.h"
+#include "aids.h"
 #include "arena.h"
 #include "ring.h"
 #include <pthread.h>
@@ -55,9 +56,11 @@ SewerMessage *sewer_consume(Sewer *sewer) {
 }
 
 SewerMessage *sewer_message_create(Arena *arena, void *value, bool with_response) {
-    SewerMessage *message = arena == NULL
-        ? malloc(sizeof(SewerMessage))
-        : arena_alloc(arena, sizeof(SewerMessage));
+    if (arena == NULL) {
+        PANIC("Arena must not be null");
+    }
+
+    SewerMessage *message = arena_alloc(arena, sizeof(SewerMessage));
     
     message->arena = arena;
     message->is_consumed = false;

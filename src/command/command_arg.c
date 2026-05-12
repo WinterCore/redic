@@ -278,7 +278,7 @@ CommandArgParseResult parse_argument(
         }
     }
 
-    UNREACHABLE("");
+    UNREACHABLE();
 }
 
 CommandArgParseResult parse_command_argument(

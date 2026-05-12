@@ -1,4 +1,5 @@
 #include "./septic_tank_operation.h"
+#include "./septic_tank.h"
 
 SepticTankResult *septic_tank_get(SepticTank *tank, Arena *result_arena, SepticTankGetOperation *op) {
     SepticTankResult *result = arena_alloc(result_arena, sizeof(SepticTankResult));

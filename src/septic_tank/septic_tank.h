@@ -5,15 +5,30 @@
 #include "../hashmap.h"
 #include "../sewer.h"
 
+typedef struct Potty Potty;
+
 typedef struct SepticTank {
     map_t data;
 
     Sewer *sewer;
+    Potty *potty;
 } SepticTank;
 
-SepticTank *septic_tank_create(Sewer *sewer);
+/**
+ * Allocates a septic tank instance bound to `sewer`.
+ * The tank owns its internal hashmap; the caller owns `sewer`.
+ */
+SepticTank *septic_tank_create(Sewer *sewer, Potty *potty);
+
+/**
+ * Frees tank storage and all in-memory key/value entries.
+ */
 void septic_tank_destroy(SepticTank *tank);
 
-pthread_t septic_tank_launch(Sewer *sewer);
+/**
+ * Starts the detached septic tank worker thread that consumes from `sewer`.
+ * Returns the created thread id.
+ */
+pthread_t septic_tank_launch(SepticTank *tank);
 
 #endif
