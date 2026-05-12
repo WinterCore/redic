@@ -3,6 +3,11 @@
 <h4 align="center">Redis server/client implementation in C from scratch with no dependencies</h4>
 
 <br />
+
+<p align="center">
+  <img src="redic-logo.png" alt="description" width="400">
+</p>
+
 <br />
 
 ## How it works
