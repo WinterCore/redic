@@ -54,6 +54,12 @@ void sewer_send(Sewer *sewer, SewerMessage *message);
 SewerMessage *sewer_consume(Sewer *sewer);
 
 /**
+ * Dequeues one message, blocking until a message is available or the timeout 
+ * (in milliseconds) expires. Returns NULL if the timeout expires.
+ */
+SewerMessage *sewer_timed_consume(Sewer *sewer, int timeout_ms);
+
+/**
  * Allocates a message in `arena`.
  * When `with_response` is true, also creates a single-item response sewer.
  */

@@ -92,5 +92,10 @@ char *clone_cstr(Arena *arena, const char *str);
 
 bool parse_long(char *str, long *value);
 
+/**
+ * Returns current monotonic time in milliseconds.
+ */
+uint64_t monotonic_now_ms(void);
+
 #endif
 

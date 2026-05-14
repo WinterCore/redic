@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include <time.h>
 
 #include "aids.h"
 #include "arena.h"
@@ -157,4 +159,10 @@ bool parse_long(char *str, long *value) {
     *value = strtol(str, &endptr, 10);
     
     return str != endptr;
+}
+
+uint64_t monotonic_now_ms(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (uint64_t)ts.tv_sec * 1000 + (uint64_t)ts.tv_nsec / 1000000;
 }

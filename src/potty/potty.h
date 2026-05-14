@@ -84,7 +84,7 @@ typedef struct Potty {
     Arena *arena;
 
     // Detached thread id for the current flusher worker (if running).
-    pthread_t flusher_pid;
+    pthread_t flusher_tid;
     // True while a flusher thread is active.
     bool flusher_running;
     // Guards `flusher_running` and `flush_jobs`.
