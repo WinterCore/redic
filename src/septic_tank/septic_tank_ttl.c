@@ -9,7 +9,7 @@ SepticTankResult *septic_tank_ttl(SepticTank *tank, Arena *result_arena, SepticT
     result->success = true;
 
     DataEntry *entry = NULL;
-    int get_result = hashmap_get(tank->data, op->key, (void **) &entry);
+    int get_result = hashmap_get(tank->data, op->key->str, op->key->len, (void **) &entry);
     
     if (get_result == MAP_MISSING) {
         result->ttl_result.ttl_s = -2;

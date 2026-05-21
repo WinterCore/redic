@@ -1,5 +1,5 @@
 #include "../command.h"
-#include <string.h>
+#include "../../data.h"
 
 
 RESPValue process_ping(Arena *arena, Server *server, CommandArg **args);
@@ -18,7 +18,8 @@ RESPValue process_ping(Arena *arena, Server *server, CommandArg **args) {
     Option *message_arg = (Option *) args[0]->value;
 
     if (message_arg->is_present) {
-        return resp_create_bulk_string_value(arena, strlen(message_arg->value), message_arg->value);
+        DataString *message = message_arg->value;
+        return resp_create_bulk_string_value(arena, message->len, message->str);
     } else {
         return resp_create_simple_string_value(arena, "PONG");
     }

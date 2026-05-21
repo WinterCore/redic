@@ -16,7 +16,7 @@ CommandDefinition GET_COMMAND = COMMAND(
 );
 
 RESPValue process_get(Arena *arena, Server *server, CommandArg **args) {
-    char *key = args[0]->value;
+    DataString *key = args[0]->value;
 
     SepticTankOperation operation = {};
     operation.response_arena = arena;

@@ -9,6 +9,8 @@
 #ifndef HASHMAP_H
 #define HASHMAP_H
 
+#include <stddef.h>
+
 #define MAP_MISSING -3  /* No such element */
 #define MAP_FULL -2 	/* Hashmap is full */
 #define MAP_OMEM -1 	/* Out of Memory */
@@ -56,17 +58,17 @@ extern int hashmap_iterate(map_t in, PFany f, any_t item);
 /*
  * Add an element to the hashmap. Return MAP_OK or MAP_OMEM.
  */
-extern int hashmap_put(map_t in, char* key, any_t value);
+extern int hashmap_put(map_t in, char* key, size_t key_len, any_t value);
 
 /*
  * Get an element from the hashmap. Return MAP_OK or MAP_MISSING.
  */
-extern int hashmap_get(map_t in, char* key, any_t *arg);
+extern int hashmap_get(map_t in, char* key, size_t key_len, any_t *arg);
 
 /*
  * Remove an element from the hashmap. Return MAP_OK or MAP_MISSING.
  */
-extern int hashmap_remove(map_t in, char* key);
+extern int hashmap_remove(map_t in, char* key, size_t key_len);
 
 /*
  * Get any element. Return MAP_OK or MAP_MISSING.

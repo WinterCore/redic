@@ -16,12 +16,12 @@ typedef struct SepticTankExpiration {
 } SepticTankExpiration;
 
 typedef struct SepticTankGetOperation {
-    char *key;
+    DataString *key;
 } SepticTankGetOperation;
 
 typedef struct SepticTankSetOperation {
-    char *key;
-    char *value;
+    DataString *key;
+    DataString *value;
     bool nx;
     bool xx;
     bool get;
@@ -30,11 +30,11 @@ typedef struct SepticTankSetOperation {
 } SepticTankSetOperation;
 
 typedef struct SepticTankDelOperation {
-    char *key;
+    DataString *key;
 } SepticTankDelOperation;
 
 typedef struct SepticTankTtlOperation {
-    char *key;
+    DataString *key;
 } SepticTankTtlOperation;
 
 typedef enum SepticTankOperationType {

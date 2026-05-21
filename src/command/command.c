@@ -43,9 +43,9 @@ RESPValue process_command_helper(
     for (size_t i = 0; i < commands_len; i += 1) {
         CommandDefinition *command_def = COMMANDS[i];
 
-        // DEBUG_PRINT("Checking command %s %d", command->name, strcmp(command->name, input_string));
-    
-        if (strcmp(command_def->name, input_command->data) == 0) {
+        size_t name_len = strlen(command_def->name);
+        if (input_command->length == name_len
+            && memcmp(input_command->data, command_def->name, name_len) == 0) {
             CommandArg **parsed_args = arena_alloc(arena, sizeof(CommandArg *) * command_def->arg_defs_arr.arg_defs_len);
 
             CommandArgParseResult parse_args_result = parse_command_arguments(

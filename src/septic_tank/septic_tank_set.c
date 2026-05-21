@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <string.h>
 
 #include "septic_tank.h"
@@ -13,7 +14,7 @@ SepticTankResult *septic_tank_set(SepticTank *tank, Arena *result_arena, SepticT
     result->error = NULL;
     result->success = false;
 
-    int get_result = hashmap_get(tank->data, op->key, (void **) &old_entry);
+    int get_result = hashmap_get(tank->data, op->key->str, op->key->len, (void **) &old_entry);
 
     if (op->nx || op->xx || op->get || op->expiration.type == ST_EXPIRATION_KEEP_OLD) {
         // Set only works with strings
@@ -23,7 +24,7 @@ SepticTankResult *septic_tank_set(SepticTank *tank, Arena *result_arena, SepticT
         }
 
         if (get_result == MAP_OK && data_is_expired(old_entry)) {
-            hashmap_remove(tank->data, op->key);
+            hashmap_remove(tank->data, op->key->str, op->key->len);
             old_entry = NULL;
             return result;
         }
@@ -68,9 +69,10 @@ SepticTankResult *septic_tank_set(SepticTank *tank, Arena *result_arena, SepticT
         result->set_result.old_value = data_copy_string_arena(result_arena, old_value);
     }
 
-    DataEntry *entry = data_create_string_entry(expires_at, strlen(op->value), op->value);
-    char *key = strdup(op->key);
-    hashmap_put(tank->data, key, entry);
+    DataEntry *entry = data_create_string_entry(expires_at, op->value->len, op->value->str);
+    char *stored_key = malloc(op->key->len);
+    memcpy(stored_key, op->key->str, op->key->len);
+    hashmap_put(tank->data, stored_key, op->key->len, entry);
 
     result->success = true;
 

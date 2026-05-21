@@ -14,10 +14,10 @@ Potty *potty_create(Sewer *sewer) {
     potty->sewer = sewer;
     potty->arena = arena_create();
     // Waste is allocated with arena because it needs to be freed once the data is flushed
-    potty->waste = hector_create(potty->arena, sizeof(SepticTankMutation), 500);
+    potty->waste = hector_create(potty->arena, sizeof(SepticTankMutation *), 500);
 
     // Here we don't allocate with arena because this hector will be used for the entirety of the program
-    potty->flush_jobs = ringbuf_create(40, sizeof(FlushJob *));
+    potty->flush_jobs = hector_create(NULL, sizeof(FlushJob *), 30);
     pthread_mutex_init(&potty->flusher_mutex, NULL);
     potty->flusher_tid = 0;
     potty->flusher_running = false;
@@ -79,7 +79,7 @@ void potty_flush(Potty *potty) {
     job->ts = now;
 
     potty->arena = arena_create();
-    potty->waste = hector_create(potty->arena, sizeof(SepticTankMutation), 500);
+    potty->waste = hector_create(potty->arena, sizeof(SepticTankMutation *), 500);
 
     pthread_mutex_lock(&potty->flusher_mutex);
     hector_push(potty->flush_jobs, &job);
@@ -104,7 +104,7 @@ void potty_flush(Potty *potty) {
 void potty_poop(Potty *potty, SepticTankMutation *mutation) {
     SepticTankMutation *cloned_mutation = septic_tank_mutation_clone(potty->arena, mutation);
 
-    hector_push(potty->waste, cloned_mutation);
+    hector_push(potty->waste, &cloned_mutation);
 }
 
 void *potty_pump(void *input) {
@@ -113,14 +113,14 @@ void *potty_pump(void *input) {
     // Poop indefinitely...
     while (1) {
         SewerMessage *message = sewer_timed_consume(potty->sewer, 1000);
-
-        if (should_flush(potty)) {
-            potty_flush(potty);
-        }
         
         if (message != NULL) {
             potty_poop(potty, message->value);
             sewer_message_destroy(message, true);
+        }
+
+        if (should_flush(potty)) {
+            potty_flush(potty);
         }
     }
 }
@@ -146,6 +146,4 @@ void potty_feed(Potty *potty, SepticTankMutation *mutation) {
 
     // Send
     sewer_send(potty->sewer, message);
-}
-e);
 }

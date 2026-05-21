@@ -86,8 +86,8 @@ SepticTankExpiration get_expire_time(CommandArg *arg) {
 }
 
 RESPValue process_set(Arena *arena, Server *server, CommandArg **args) {
-    char *key = args[0]->value;
-    char *value = args[1]->value;
+    DataString *key = args[0]->value;
+    DataString *value = args[1]->value;
     
     CommandArg *condition = args[2];
     bool is_condition_on = ((Option *) condition->value)->is_present;
@@ -123,8 +123,9 @@ RESPValue process_set(Arena *arena, Server *server, CommandArg **args) {
 
     if (get) {
         if (result->set_result.old_value != NULL) {
-            return resp_create_simple_string_value(
+            return resp_create_bulk_string_value(
                 arena,
+                result->set_result.old_value->len,
                 result->set_result.old_value->str
             );
         }

@@ -13,6 +13,7 @@
 /* We need to keep keys and values */
 typedef struct _hashmap_element{
 	char* key;
+	size_t key_len;
 	int in_use;
 	any_t data;
 } hashmap_element;
@@ -172,9 +173,9 @@ unsigned long crc32(const unsigned char *s, unsigned int len)
 /*
  * Hashing function for a string
  */
-unsigned int hashmap_hash_int(hashmap_map * m, char* keystring){
+unsigned int hashmap_hash_int(hashmap_map * m, char* keystring, size_t key_len){
 
-    unsigned long key = crc32((unsigned char*)(keystring), strlen(keystring));
+    unsigned long key = crc32((unsigned char*)(keystring), key_len);
 
 	/* Robert Jenkins' 32 bit Mix Function */
 	key += (key << 12);
@@ -196,7 +197,7 @@ unsigned int hashmap_hash_int(hashmap_map * m, char* keystring){
  * Return the integer of the location in data
  * to store the point to the item, or MAP_FULL.
  */
-int hashmap_hash(map_t in, char* key){
+int hashmap_hash(map_t in, char* key, size_t key_len){
 	int curr;
 	int i;
 
@@ -207,14 +208,16 @@ int hashmap_hash(map_t in, char* key){
 	if(m->size >= (m->table_size/2)) return MAP_FULL;
 
 	/* Find the best index */
-	curr = hashmap_hash_int(m, key);
+	curr = hashmap_hash_int(m, key, key_len);
 
 	/* Linear probing */
 	for(i = 0; i< MAX_CHAIN_LENGTH; i++){
 		if(m->data[curr].in_use == 0)
 			return curr;
 
-		if(m->data[curr].in_use == 1 && (strcmp(m->data[curr].key,key)==0))
+		if(m->data[curr].in_use == 1
+			&& m->data[curr].key_len == key_len
+			&& memcmp(m->data[curr].key, key, key_len) == 0)
 			return curr;
 
 		curr = (curr + 1) % m->table_size;
@@ -252,8 +255,8 @@ int hashmap_rehash(map_t in){
 
         if (curr[i].in_use == 0)
             continue;
-            
-		status = hashmap_put(m, curr[i].key, curr[i].data);
+
+		status = hashmap_put(m, curr[i].key, curr[i].key_len, curr[i].data);
 		if (status != MAP_OK)
 			return status;
 	}
@@ -266,7 +269,7 @@ int hashmap_rehash(map_t in){
 /*
  * Add a pointer to the hashmap with some key
  */
-int hashmap_put(map_t in, char* key, any_t value){
+int hashmap_put(map_t in, char* key, size_t key_len, any_t value){
 	int index;
 	hashmap_map* m;
 
@@ -274,12 +277,12 @@ int hashmap_put(map_t in, char* key, any_t value){
 	m = (hashmap_map *) in;
 
 	/* Find a place to put our value */
-	index = hashmap_hash(in, key);
+	index = hashmap_hash(in, key, key_len);
 	while(index == MAP_FULL){
 		if (hashmap_rehash(in) == MAP_OMEM) {
 			return MAP_OMEM;
 		}
-		index = hashmap_hash(in, key);
+		index = hashmap_hash(in, key, key_len);
 	}
 
 	/* Free old key/value if overwriting an existing entry */
@@ -293,6 +296,7 @@ int hashmap_put(map_t in, char* key, any_t value){
 	/* Set the data */
 	m->data[index].data = value;
 	m->data[index].key = key;
+	m->data[index].key_len = key_len;
 	m->data[index].in_use = 1;
 
 	return MAP_OK;
@@ -301,7 +305,7 @@ int hashmap_put(map_t in, char* key, any_t value){
 /*
  * Get your pointer out of the hashmap with a key
  */
-int hashmap_get(map_t in, char* key, any_t *arg){
+int hashmap_get(map_t in, char* key, size_t key_len, any_t *arg){
 	int curr;
 	int i;
 	hashmap_map* m;
@@ -310,14 +314,15 @@ int hashmap_get(map_t in, char* key, any_t *arg){
 	m = (hashmap_map *) in;
 
 	/* Find data location */
-	curr = hashmap_hash_int(m, key);
+	curr = hashmap_hash_int(m, key, key_len);
 
 	/* Linear probing, if necessary */
 	for(i = 0; i<MAX_CHAIN_LENGTH; i++){
 
         int in_use = m->data[curr].in_use;
         if (in_use == 1){
-            if (strcmp(m->data[curr].key,key)==0){
+            if (m->data[curr].key_len == key_len
+                && memcmp(m->data[curr].key, key, key_len) == 0){
                 *arg = (m->data[curr].data);
                 return MAP_OK;
             }
@@ -363,7 +368,7 @@ int hashmap_iterate(map_t in, PFany f, any_t item) {
 /*
  * Remove an element with that key from the map
  */
-int hashmap_remove(map_t in, char* key){
+int hashmap_remove(map_t in, char* key, size_t key_len){
 	int i;
 	int curr;
 	hashmap_map* m;
@@ -372,20 +377,22 @@ int hashmap_remove(map_t in, char* key){
 	m = (hashmap_map *) in;
 
 	/* Find key */
-	curr = hashmap_hash_int(m, key);
+	curr = hashmap_hash_int(m, key, key_len);
 
 	/* Linear probing, if necessary */
 	for(i = 0; i<MAX_CHAIN_LENGTH; i++){
 
         int in_use = m->data[curr].in_use;
         if (in_use == 1){
-            if (strcmp(m->data[curr].key,key)==0){
+            if (m->data[curr].key_len == key_len
+                && memcmp(m->data[curr].key, key, key_len) == 0){
                 /* Blank out the fields */
                 if (m->free_key) m->free_key(m->data[curr].key);
                 if (m->free_value) m->free_value(m->data[curr].data);
                 m->data[curr].in_use = 0;
                 m->data[curr].data = NULL;
                 m->data[curr].key = NULL;
+                m->data[curr].key_len = 0;
 
                 /* Reduce the size */
                 m->size--;

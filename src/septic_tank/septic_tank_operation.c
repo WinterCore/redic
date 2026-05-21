@@ -12,17 +12,17 @@ static SepticTankOperation *clone_operation(Arena *arena, SepticTankOperation *o
 
     switch (operation->type) {
         case SEPTIC_TANK_DEL:
-            cloned_operation->del.key = clone_string(arena, strlen(operation->del.key), operation->del.key);
+            cloned_operation->del.key = data_copy_string_arena(arena, operation->del.key);
             break;
         case SEPTIC_TANK_SET:
-            cloned_operation->set.key = clone_string(arena, strlen(operation->set.key), operation->set.key);
-            cloned_operation->set.value = clone_string(arena, strlen(operation->set.value), operation->set.value);
+            cloned_operation->set.key = data_copy_string_arena(arena, operation->set.key);
+            cloned_operation->set.value = data_copy_string_arena(arena, operation->set.value);
             break;
         case SEPTIC_TANK_TTL:
-            cloned_operation->ttl.key = clone_string(arena, strlen(operation->ttl.key), operation->ttl.key);
+            cloned_operation->ttl.key = data_copy_string_arena(arena, operation->ttl.key);
             break;
         case SEPTIC_TANK_GET:
-            cloned_operation->get.key = clone_string(arena, strlen(operation->get.key), operation->get.key);
+            cloned_operation->get.key = data_copy_string_arena(arena, operation->get.key);
             break;
         default:
             UNREACHABLE();
@@ -59,11 +59,11 @@ SepticTankMutation *septic_tank_mutation_clone(Arena *arena, SepticTankMutation 
 
     switch (mutation->type) {
         case SEPTIC_TANK_SET:
-            clone->set.key = clone_cstr(arena, mutation->set.key);
-            clone->set.value = clone_cstr(arena, mutation->set.value);
+            clone->set.key = data_copy_string_arena(arena, mutation->set.key);
+            clone->set.value = data_copy_string_arena(arena, mutation->set.value);
             break;
         case SEPTIC_TANK_DEL:
-            clone->del.key = clone_cstr(arena, mutation->del.key);
+            clone->del.key = data_copy_string_arena(arena, mutation->del.key);
             break;
         default:
             UNREACHABLE();

@@ -3,6 +3,7 @@
 #include <time.h>
 #include <inttypes.h>
 
+#include "../data.h"
 #include "./command.h"
 
 typedef struct InputArgArray {
@@ -132,9 +133,9 @@ CommandArgParseResult parse_argument(
             }
 
             iaa_consume_arg(iaa, 0);
-            char *str = arena_alloc(arena, arg->length + 1);
-            memcpy(str, arg->data, arg->length);
-            str[arg->length] = '\0';
+            DataString *str = arena_alloc(arena, sizeof(DataString) + arg->length);
+            str->len = arg->length;
+            memcpy(str->str, arg->data, arg->length);
 
             *value = str;
 
@@ -301,12 +302,14 @@ CommandArgParseResult parse_command_argument(
 
     size_t i = 0;
 
+    size_t token_len = strlen(arg_def->token);
     while ((arg = iaa_peek_arg(iaa, i))) {
         if (arg == NULL) {
             break;
         }
 
-        if (strcmp(arg->data, arg_def->token) == 0) {
+        if (arg->length == token_len
+            && memcmp(arg->data, arg_def->token, token_len) == 0) {
             iaa_consume_arg(iaa, i);
 
             InputArgArray *shrinked_iaa = iaa_clone_shrinked_window_at_index(arena, iaa, i);

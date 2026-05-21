@@ -12,14 +12,8 @@ Sewer *sewer_create(size_t cap) {
 
     pthread_mutex_init(&sewer->mutex, NULL);
 
-    pthread_condattr_t condvar_attrs;
-    pthread_condattr_init(&condvar_attrs);
-    pthread_condattr_setclock(&condvar_attrs, CLOCK_MONOTONIC);
-
-    pthread_cond_init(&sewer->has_items, &condvar_attrs);
-    pthread_cond_init(&sewer->has_space, &condvar_attrs);
-
-    pthread_condattr_destroy(&condvar_attrs);
+    pthread_cond_init(&sewer->has_items, NULL);
+    pthread_cond_init(&sewer->has_space, NULL);
 
     sewer->buffer = ringbuf_create(cap, sizeof(SewerMessage *));
 
@@ -69,7 +63,7 @@ SewerMessage *sewer_timed_consume(Sewer *sewer, int timeout_ms) {
     pthread_mutex_lock(&sewer->mutex);
 
     struct timespec timeout_ts;
-    clock_gettime(CLOCK_MONOTONIC, &timeout_ts);
+    clock_gettime(CLOCK_REALTIME, &timeout_ts);
     timeout_ts.tv_sec += timeout_ms / 1000;
     timeout_ts.tv_nsec += (timeout_ms % 1000) * 1000000;
     
