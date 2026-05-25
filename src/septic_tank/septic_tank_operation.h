@@ -65,6 +65,16 @@ typedef struct SepticTankOperation {
     };
 } SepticTankOperation;
 
+typedef struct SepticTankMutation {
+    SepticTankOperationType type;
+
+    union { 
+        SepticTankSetOperation set;
+        SepticTankDelOperation del;
+    };
+} SepticTankMutation;
+
+
 typedef struct SepticTankGetResult {
     DataString *value;
 } SepticTankGetResult;
@@ -89,6 +99,8 @@ typedef struct SepticTankResult {
         SepticTankDelResult del_result;
         SepticTankTtlResult ttl_result;
     };
+
+    SepticTankMutation *resolved_mutation;
 
     bool success;
     char *error;
@@ -124,16 +136,6 @@ SepticTankResult *septic_tank_del(SepticTank *tank, Arena *result_arena, SepticT
  */
 SepticTankResult *septic_tank_ttl(SepticTank *tank, Arena *result_arena, SepticTankTtlOperation *op);
 
-
-typedef struct SepticTankMutation {
-    SepticTankOperationType type;
-
-    union { 
-        SepticTankSetOperation set;
-        SepticTankDelOperation del;
-    };
-} SepticTankMutation;
-
 /**
  * Deep-clones a mutation payload into `arena` for async persistence/replay paths.
  */
@@ -144,5 +146,7 @@ SepticTankMutation *septic_tank_mutation_clone(Arena *arena, SepticTankMutation 
  * field copies into a new `SepticTankMutation` allocated in `arena`.
  */
 SepticTankMutation septic_tank_mutation_from_operation(SepticTankOperation *operation);
+
+int septic_tank_mutation_serialize(SepticTankMutation *mutation, uint8_t *buffer);
 
 #endif

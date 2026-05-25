@@ -6,6 +6,7 @@
 SepticTankResult *septic_tank_ttl(SepticTank *tank, Arena *result_arena, SepticTankTtlOperation *op) {
     SepticTankResult *result = arena_alloc(result_arena, sizeof(SepticTankResult));
     result->type = SEPTIC_TANK_GET;
+    result->resolved_mutation = NULL;
     result->success = true;
 
     DataEntry *entry = NULL;

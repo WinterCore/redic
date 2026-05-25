@@ -11,37 +11,46 @@ SepticTankResult *septic_tank_set(SepticTank *tank, Arena *result_arena, SepticT
     SepticTankResult *result = arena_alloc(result_arena, sizeof(SepticTankResult));
     result->type = SEPTIC_TANK_SET;
     result->set_result = (SepticTankSetResult) { .old_value = NULL };
+    result->resolved_mutation = NULL;
     result->error = NULL;
-    result->success = false;
+    result->success = true;
 
-    int get_result = hashmap_get(tank->data, op->key->str, op->key->len, (void **) &old_entry);
+    hashmap_get(tank->data, op->key->str, op->key->len, (void **) &old_entry);
+    bool old_entry_is_expired = old_entry != NULL && data_is_expired(old_entry);
 
-    if (op->nx || op->xx || op->get || op->expiration.type == ST_EXPIRATION_KEEP_OLD) {
-        // Set only works with strings
-        if (get_result == MAP_OK && old_entry->type != DATA_STRING) {
-            result->error = "WRONGTYPE Operation against a key holding the wrong kind of value";
-            return result;
-        }
-
-        if (get_result == MAP_OK && data_is_expired(old_entry)) {
-            hashmap_remove(tank->data, op->key->str, op->key->len);
-            old_entry = NULL;
-            return result;
-        }
-
-        if (
-            (op->nx && get_result == MAP_OK) ||
-            (op->xx && get_result == MAP_MISSING)
-        ) {
-            if (op->get && old_entry != NULL) {
-                DataString *old_value = data_unwrap_string(old_entry);
-                result->set_result.old_value = data_copy_string_arena(result_arena, old_value);
-            }
-
-            return result;
-        }
+    // Data type check
+    if (old_entry && !old_entry_is_expired && old_entry->type != DATA_STRING) {
+        result->success = false;
+        result->error = "WRONGTYPE Operation against a key holding the wrong kind of value";
+        return result;
     }
 
+    // NX with an existing non-expired value
+    if (op->nx && old_entry != NULL && !old_entry_is_expired) {
+        if (op->get) {
+            DataString *old_value = data_unwrap_string(old_entry);
+            result->set_result.old_value = data_copy_string_arena(result_arena, old_value);
+            return result;
+        }
+
+        return result;
+    }
+
+    // XX with no existing value
+    if (op->xx && (old_entry == NULL || old_entry_is_expired)) {
+        if (old_entry_is_expired) {
+            hashmap_remove(tank->data, op->key->str, op->key->len);
+        }
+
+        return result;
+    }
+
+    // Remove expired entry
+    if (old_entry != NULL && old_entry_is_expired) {
+        hashmap_remove(tank->data, op->key->str, op->key->len);
+        old_entry = NULL;
+    }
+    
     OptionTime expires_at;
 
     switch (op->expiration.type) {
@@ -59,8 +68,6 @@ SepticTankResult *septic_tank_set(SepticTank *tank, Arena *result_arena, SepticT
                 expires_at.is_present = false;
             }
             break;
-        default:
-            UNREACHABLE();
     }
 
     // Snapshot old value before hashmap_put auto-frees the old entry
@@ -73,8 +80,27 @@ SepticTankResult *septic_tank_set(SepticTank *tank, Arena *result_arena, SepticT
     char *stored_key = malloc(op->key->len);
     memcpy(stored_key, op->key->str, op->key->len);
     hashmap_put(tank->data, stored_key, op->key->len, entry);
+    result->resolved_mutation = arena_alloc(result_arena, sizeof(SepticTankMutation));
+    result->resolved_mutation->type = SEPTIC_TANK_SET;
+    result->resolved_mutation->set = (SepticTankSetOperation) {
+        .key = op->key,
+        .value = op->value,
+        .nx = op->nx,
+        .xx = op->xx,
+        .get = op->get,
+    };
 
-    result->success = true;
+    if (expires_at.is_present) {
+        result->resolved_mutation->set.expiration = (SepticTankExpiration) {
+            .type = ST_EXPIRATION_UNIX_TS,
+            .ts = expires_at.value,
+        };
+    } else {
+        result->resolved_mutation->set.expiration = (SepticTankExpiration) {
+            .type = ST_EXPIRATION_NO_EXPIRE,
+            .ts = -1,
+        };
+    }
 
     return result;
 }

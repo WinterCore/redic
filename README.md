@@ -73,7 +73,7 @@ Current status: potty scaffolding and mutation routing are implemented; on-disk 
   - [ ] Lists (`LPUSH`, `RPUSH`, `LPOP`, `RPOP`, `LRANGE`)
   - [ ] Hashes (`HSET`, `HGET`, `HGETALL`, `HDEL`)
   - [ ] Sets (`SADD`, `SREM`, `SMEMBERS`, `SISMEMBER`)
-- [ ] AOF persistence — potty actor/mutation routing exists; still need durable flush format, fsync policy, startup replay, and compaction
+- [-] AOF persistence — potty actor/mutation routing exists; still need durable flush format, fsync policy, startup replay, and compaction
 - [ ] Replication — replica handshake (`PING` → `REPLCONF` → `PSYNC`), full resync on connect, partial resync via replication backlog after reconnect
 - [ ] Transactions — `MULTI` / `EXEC` / `DISCARD` with `WATCH` for optimistic locking
 - [ ] Pub/Sub — `SUBSCRIBE` / `PUBLISH` / `UNSUBSCRIBE` with fan-out to blocking subscribers

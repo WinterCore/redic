@@ -4,3 +4,4 @@ Redic
 .cache
 *.dSYM
 compile_commands.json
+data.aof

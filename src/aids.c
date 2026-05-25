@@ -122,6 +122,10 @@ void hector_splice(Hector *hec, size_t n, size_t count) {
 }
 
 void *hector_get(Hector *hec, size_t n) {
+    if (n >= hec->length) {
+        return NULL;
+    }
+
     return hec->mem + (hec->elem_size * n);
 }
 

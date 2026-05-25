@@ -86,6 +86,7 @@ static void print_value_helper(size_t indent_level, RESPValue *value) {
             break;
         }
 
+        case RESP_SIMPLE_ERROR:
         default: {
             UNIMPLEMENTED("debug_print for %d", value->kind);
             break;

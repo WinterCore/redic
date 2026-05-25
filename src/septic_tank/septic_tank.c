@@ -58,10 +58,10 @@ void septic_tank_digest(SepticTank *tank, SewerMessage *message) {
         response_message->is_consumed = true;
     }
 
-    if (succeeded && septic_tank_operation_is_mutation(operation->type)) {
-        SepticTankMutation mutation = septic_tank_mutation_from_operation(operation);
+    if (succeeded && result->resolved_mutation != NULL) {
+        SepticTankMutation *mutation = result->resolved_mutation;
 
-        potty_feed(tank->potty, &mutation);
+        potty_feed(tank->potty, mutation);
     }
 }
 
