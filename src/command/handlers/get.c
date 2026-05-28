@@ -1,7 +1,3 @@
-#include <pthread.h>
-#include <string.h>
-
-#include "../../sewer.h"
 #include "../../septic_tank/septic_tank_operation.h"
 #include "../command.h"
 

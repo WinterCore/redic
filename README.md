@@ -59,12 +59,12 @@ Current status: potty scaffolding and mutation routing are implemented; on-disk 
   - [x] `PING [message]`
   - [x] `SET key value [NX|XX] [GET] [EX|PX|EXAT|PXAT|KEEPTTL]`
   - [x] `GET key`
-  - [x] `DEL key [key ...]`
+  - [x] `DEL key [key ...]` (single key for now cuz command parser doesn't support variadic args)
   - [x] `TTL key`
   - [x] `INFO`
-  - [ ] `EXISTS key [key ...]`
-  - [ ] `EXPIRE key seconds`
-  - [ ] `INCR` / `DECR` / `INCRBY` / `DECRBY`
+  - [x] `EXISTS key [key ...]` (single key for now)
+  - [x] `EXPIRE key seconds`
+  - [x] `INCR` / `DECR` / `INCRBY` / `DECRBY`
   - [ ] `APPEND key value`
   - [ ] `MGET key [key ...]` / `MSET key value [key value ...]`
   - [ ] `KEYS pattern`

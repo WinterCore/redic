@@ -90,7 +90,19 @@ void hector_destroy(Hector *hec);
 char *clone_string(Arena *arena, size_t str_len, char *str);
 char *clone_cstr(Arena *arena, const char *str);
 
+/**
+ * Case-insensitive (ASCII) equality for two length-prefixed byte ranges.
+ */
+bool str_eq_ci(const char *a, size_t a_len, const char *b, size_t b_len);
+
 bool parse_long(char *str, long *value);
+
+/**
+ * Parses exactly `len` bytes of `str` as a base-10 signed 64-bit integer.
+ * Does not require null-termination. Returns false on empty input,
+ * trailing junk, or over/underflow.
+ */
+bool parse_int64(const char *str, size_t len, int64_t *out);
 
 /**
  * Returns current monotonic time in milliseconds.

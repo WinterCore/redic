@@ -43,6 +43,18 @@ void septic_tank_digest(SepticTank *tank, SewerMessage *message) {
             result = septic_tank_ttl(tank, operation->response_arena, &operation->ttl);
             break;
         }
+        case SEPTIC_TANK_EXISTS: {
+            result = septic_tank_exists(tank, operation->response_arena, &operation->exists);
+            break;
+        }
+        case SEPTIC_TANK_EXPIRE: {
+            result = septic_tank_expire(tank, operation->response_arena, &operation->expire);
+            break;
+        }
+        case SEPTIC_TANK_INCRBY: {
+            result = septic_tank_incrby(tank, operation->response_arena, &operation->incrby);
+            break;
+        }
         default:
             UNIMPLEMENTED("Unknown digest operation %d", operation->type);
     }

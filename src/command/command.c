@@ -11,6 +11,12 @@ static CommandDefinition* COMMANDS[] = {
     &DEL_COMMAND,
     &INFO_COMMAND,
     &TTL_COMMAND,
+    &EXISTS_COMMAND,
+    &EXPIRE_COMMAND,
+    &INCR_COMMAND,
+    &DECR_COMMAND,
+    &INCRBY_COMMAND,
+    &DECRBY_COMMAND,
 };
 
 
@@ -44,8 +50,7 @@ RESPValue process_command_helper(
         CommandDefinition *command_def = COMMANDS[i];
 
         size_t name_len = strlen(command_def->name);
-        if (input_command->length == name_len
-            && memcmp(input_command->data, command_def->name, name_len) == 0) {
+        if (str_eq_ci(input_command->data, input_command->length, command_def->name, name_len)) {
             CommandArg **parsed_args = arena_alloc(arena, sizeof(CommandArg *) * command_def->arg_defs_arr.arg_defs_len);
 
             CommandArgParseResult parse_args_result = parse_command_arguments(

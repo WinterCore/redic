@@ -5,6 +5,7 @@ SepticTankResult *septic_tank_get(SepticTank *tank, Arena *result_arena, SepticT
     SepticTankResult *result = arena_alloc(result_arena, sizeof(SepticTankResult));
     result->type = SEPTIC_TANK_GET;
     result->resolved_mutation = NULL;
+    result->error = NULL;
 
     DataEntry *entry = NULL;
     int get_result = hashmap_get(tank->data, op->key->str, op->key->len, (void **) &entry);

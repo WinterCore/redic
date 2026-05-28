@@ -126,5 +126,12 @@ extern CommandDefinition DEL_COMMAND;
 extern CommandDefinition GET_COMMAND;
 extern CommandDefinition INFO_COMMAND;
 extern CommandDefinition TTL_COMMAND;
+extern CommandDefinition EXISTS_COMMAND;
+extern CommandDefinition EXPIRE_COMMAND;
+
+extern CommandDefinition INCR_COMMAND;
+extern CommandDefinition DECR_COMMAND;
+extern CommandDefinition INCRBY_COMMAND;
+extern CommandDefinition DECRBY_COMMAND;
 
 #endif

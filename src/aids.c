@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <time.h>
+#include <errno.h>
 
 #include "aids.h"
 #include "arena.h"
@@ -155,6 +156,48 @@ char *clone_cstr(Arena *arena, const char *str) {
     memcpy(copy, str, len);
 
     return copy;
+}
+
+bool str_eq_ci(const char *a, size_t a_len, const char *b, size_t b_len) {
+    if (a_len != b_len) {
+        return false;
+    }
+
+    for (size_t i = 0; i < a_len; i += 1) {
+        char ca = a[i];
+        char cb = b[i];
+
+        if (ca >= 'A' && ca <= 'Z') ca += 'a' - 'A';
+        if (cb >= 'A' && cb <= 'Z') cb += 'a' - 'A';
+
+        if (ca != cb) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool parse_int64(const char *str, size_t len, int64_t *out) {
+    // An int64 spans at most 20 chars (19 digits + optional sign)
+    if (len == 0 || len > 20) {
+        return false;
+    }
+
+    char buf[21];
+    memcpy(buf, str, len);
+    buf[len] = '\0';
+
+    char *endptr;
+    errno = 0;
+    long long value = strtoll(buf, &endptr, 10);
+
+    if (endptr != buf + len || errno == ERANGE) {
+        return false;
+    }
+
+    *out = value;
+    return true;
 }
 
 bool parse_long(char *str, long *value) {

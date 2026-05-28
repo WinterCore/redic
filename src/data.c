@@ -16,6 +16,17 @@ DataString *data_copy_string_arena(Arena *arena, DataString *string) {
     return arena_string;
 }
 
+DataString *data_string_from_int64(Arena *arena, int64_t value) {
+    char buf[21];
+    int len = snprintf(buf, sizeof(buf), "%" PRId64, value);
+
+    DataString *string = arena_alloc(arena, sizeof(DataString) + len);
+    string->len = len;
+    memcpy(string->str, buf, len);
+
+    return string;
+}
+
 DataEntry *data_create_string_entry(
     OptionTime expires_at,
     size_t str_len,

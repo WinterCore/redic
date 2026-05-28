@@ -34,6 +34,11 @@ DataEntry *data_create_string_entry(
 DataString *data_copy_string_arena(Arena *arena, DataString *string);
 DataString *data_unwrap_string(DataEntry *entry);
 
+/**
+ * Allocates a DataString holding the base-10 representation of `value`.
+ */
+DataString *data_string_from_int64(Arena *arena, int64_t value);
+
 void data_destroy_entry(DataEntry *entry);
 
 #endif

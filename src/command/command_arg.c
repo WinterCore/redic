@@ -156,12 +156,8 @@ CommandArgParseResult parse_argument(
             }
             iaa_consume_arg(iaa, 0);
 
-            // TODO: handle overflow/underflow
             int64_t *num = arena_alloc(arena, sizeof(int64_t));
-            char *endptr;
-            *num = strtoll(arg->data, &endptr, 10);
-
-            if ((uint64_t) (endptr - arg->data) != arg->length) {
+            if (! parse_int64(arg->data, arg->length, num)) {
                 return CMD_ARGS_TYPE_MISMATCH;
             }
 
@@ -308,8 +304,7 @@ CommandArgParseResult parse_command_argument(
             break;
         }
 
-        if (arg->length == token_len
-            && memcmp(arg->data, arg_def->token, token_len) == 0) {
+        if (str_eq_ci(arg->data, arg->length, arg_def->token, token_len)) {
             iaa_consume_arg(iaa, i);
 
             InputArgArray *shrinked_iaa = iaa_clone_shrinked_window_at_index(arena, iaa, i);

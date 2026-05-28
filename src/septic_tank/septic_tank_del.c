@@ -3,8 +3,9 @@
 
 SepticTankResult *septic_tank_del(SepticTank *tank, Arena *result_arena, SepticTankDelOperation *op) {
     SepticTankResult *result = arena_alloc(result_arena, sizeof(SepticTankResult));
+    result->error = NULL;
     result->type = SEPTIC_TANK_DEL;
-    result->success = false;
+    result->success = true;
     result->resolved_mutation = NULL;
     result->del_result = (SepticTankDelResult) { .num_deleted = 0 };
 
@@ -21,8 +22,6 @@ SepticTankResult *septic_tank_del(SepticTank *tank, Arena *result_arena, SepticT
             result->resolved_mutation->type = SEPTIC_TANK_DEL;
             result->resolved_mutation->del = (SepticTankDelOperation) { .key = op->key };
         }
-
-        result->success = true;
     }
 
     return result;

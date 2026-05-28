@@ -3,7 +3,10 @@
 #include "septic_tank_operation.h"
 
 bool septic_tank_operation_is_mutation(SepticTankOperationType type) {
-    return type == SEPTIC_TANK_SET || type == SEPTIC_TANK_DEL;
+    return type == SEPTIC_TANK_SET
+        || type == SEPTIC_TANK_DEL
+        || type == SEPTIC_TANK_EXPIRE
+        || type == SEPTIC_TANK_INCRBY;
 }
 
 static SepticTankOperation *clone_operation(Arena *arena, SepticTankOperation *operation) {
@@ -24,6 +27,15 @@ static SepticTankOperation *clone_operation(Arena *arena, SepticTankOperation *o
             break;
         case SEPTIC_TANK_GET:
             cloned_operation->get.key = data_copy_string_arena(arena, operation->get.key);
+            break;
+        case SEPTIC_TANK_EXISTS:
+            cloned_operation->exists.key = data_copy_string_arena(arena, operation->exists.key);
+            break;
+        case SEPTIC_TANK_EXPIRE:
+            cloned_operation->expire.key = data_copy_string_arena(arena, operation->expire.key);
+            break;
+        case SEPTIC_TANK_INCRBY:
+            cloned_operation->incrby.key = data_copy_string_arena(arena, operation->incrby.key);
             break;
     }
 
@@ -59,7 +71,9 @@ SepticTankMutation *septic_tank_mutation_clone(Arena *arena, SepticTankMutation 
     switch (mutation->type) {
         case SEPTIC_TANK_GET:
         case SEPTIC_TANK_TTL:
-            // Not a mutation
+        case SEPTIC_TANK_EXISTS:
+        case SEPTIC_TANK_INCRBY:
+            // Not a persisted mutation type
             UNREACHABLE();
             break;
         case SEPTIC_TANK_SET:
@@ -69,72 +83,10 @@ SepticTankMutation *septic_tank_mutation_clone(Arena *arena, SepticTankMutation 
         case SEPTIC_TANK_DEL:
             clone->del.key = data_copy_string_arena(arena, mutation->del.key);
             break;
+        case SEPTIC_TANK_EXPIRE:
+            clone->expire.key = data_copy_string_arena(arena, mutation->expire.key);
+            break;
     }
 
     return clone;
-}
-
-SepticTankMutation septic_tank_mutation_from_operation(SepticTankOperation *operation) {
-    SepticTankMutation mutation = {};
-    mutation.type = operation->type;
-
-    switch (operation->type) {
-        case SEPTIC_TANK_GET:
-        case SEPTIC_TANK_TTL:
-            // Not a mutation
-            UNREACHABLE();
-            break;
-        case SEPTIC_TANK_SET:
-            mutation.set = operation->set;
-            break;
-        case SEPTIC_TANK_DEL:
-            mutation.del = operation->del;
-            break;
-    }
-
-    return mutation;
-}
-
-
-
-int septic_tank_mutation_serialize(SepticTankMutation *mutation, uint8_t *buffer) {
-    switch (mutation->type) {
-        case SEPTIC_TANK_GET:
-        case SEPTIC_TANK_TTL:
-            // Not a mutation
-            UNREACHABLE();
-            break;
-        case SEPTIC_TANK_SET: {
-            int l = 8;
-
-            // Preserve 8 bytes for the length which will be written later
-            
-            uint64_t key_len = mutation->set.key->len;
-            memcpy(&buffer[l], &key_len, sizeof(uint64_t));
-            memcpy(&buffer[l + 8], &mutation->set.key, key_len);
-            l += sizeof(uint64_t) + key_len;
-            
-            
-            uint64_t value_len = mutation->set.value->len;
-            memcpy(&buffer[l], &value_len, sizeof(uint64_t));
-            memcpy(&buffer[l + 8], &mutation->set.value, value_len);
-            l += sizeof(uint64_t) + value_len;
-
-            buffer[l] = mutation->set.nx;
-            l += 1;
-
-            buffer[l] = mutation->set.xx;
-            l += 1;
-
-            buffer[l] = mutation->set.get;
-            l += 1;
-
-            break;
-        }
-        case SEPTIC_TANK_DEL: {
-            break;
-        }
-    }
-
-    return -1;
 }
