@@ -1,6 +1,6 @@
 // test.ts
-import { connect } from "@db/redis";
-import { assertEquals, assertExists } from "@std/assert";
+import { connect, ErrorReplyError } from "@db/redis";
+import { assertEquals, assertExists, assertRejects } from "@std/assert";
 
 async function makeRedis() {
   return await connect({ hostname: "127.0.0.1", port: 6969 });
@@ -134,6 +134,132 @@ Deno.test("set KEEPTTL - preserves existing TTL", async () => {
 
   const value = await redis.get(key);
   assertEquals(value, "updated", "value should be updated after KEEPTTL set");
+
+  redis.close();
+});
+
+Deno.test("set EXAT - key expires at an absolute time", async () => {
+  const redis = await makeRedis();
+  const key = rkey("exat");
+
+  const exat = Math.floor(Date.now() / 1000) + 100;
+  await redis.set(key, "value", { exat });
+
+  const ttl = await redis.ttl(key);
+  assertExists(ttl, "TTL should exist after EXAT");
+  assertEquals(ttl > 0 && ttl <= 100, true, "EXAT should yield a positive TTL within range");
+
+  redis.close();
+});
+
+Deno.test("incr - initializes a missing key to 1", async () => {
+  const redis = await makeRedis();
+  const key = rkey("incr_new");
+
+  assertEquals(await redis.incr(key), 1, "incr on a missing key should return 1");
+
+  redis.close();
+});
+
+Deno.test("incr - increments an existing counter", async () => {
+  const redis = await makeRedis();
+  const key = rkey("incr");
+
+  await redis.set(key, "10");
+  assertEquals(await redis.incr(key), 11);
+  assertEquals(await redis.get(key), "11", "stored value should round-trip as a string");
+
+  redis.close();
+});
+
+Deno.test("decr - initializes a missing key to -1", async () => {
+  const redis = await makeRedis();
+  const key = rkey("decr_new");
+
+  assertEquals(await redis.decr(key), -1, "decr on a missing key should return -1");
+
+  redis.close();
+});
+
+Deno.test("decr - decrements an existing counter", async () => {
+  const redis = await makeRedis();
+  const key = rkey("decr");
+
+  await redis.set(key, "10");
+  assertEquals(await redis.decr(key), 9);
+
+  redis.close();
+});
+
+Deno.test("incrby - adds the given amount", async () => {
+  const redis = await makeRedis();
+  const key = rkey("incrby");
+
+  await redis.set(key, "5");
+  assertEquals(await redis.incrby(key, 20), 25);
+
+  redis.close();
+});
+
+Deno.test("incrby - missing key starts from 0", async () => {
+  const redis = await makeRedis();
+  const key = rkey("incrby_new");
+
+  assertEquals(await redis.incrby(key, 7), 7);
+
+  redis.close();
+});
+
+Deno.test("decrby - subtracts the given amount", async () => {
+  const redis = await makeRedis();
+  const key = rkey("decrby");
+
+  await redis.set(key, "20");
+  assertEquals(await redis.decrby(key, 5), 15);
+
+  redis.close();
+});
+
+Deno.test("decrby - a negative decrement increments", async () => {
+  const redis = await makeRedis();
+  const key = rkey("decrby_neg");
+
+  await redis.set(key, "10");
+  assertEquals(await redis.decrby(key, -5), 15, "DECRBY by a negative amount should increment");
+
+  redis.close();
+});
+
+Deno.test("incr - preserves an existing TTL", async () => {
+  const redis = await makeRedis();
+  const key = rkey("incr_ttl");
+
+  await redis.set(key, "1", { ex: 100 });
+  await redis.incr(key);
+
+  const ttl = await redis.ttl(key);
+  assertExists(ttl, "TTL should exist after incr");
+  assertEquals(ttl > 0, true, "TTL should survive an increment");
+
+  redis.close();
+});
+
+Deno.test("incr - errors on a non-integer value", async () => {
+  const redis = await makeRedis();
+  const key = rkey("incr_nan");
+
+  await redis.set(key, "not a number");
+  await assertRejects(() => redis.incr(key), ErrorReplyError);
+
+  redis.close();
+});
+
+Deno.test("incr - errors on overflow", async () => {
+  const redis = await makeRedis();
+  const key = rkey("incr_overflow");
+
+  await redis.set(key, "9223372036854775807");
+  await assertRejects(() => redis.incr(key), ErrorReplyError);
 
   redis.close();
 });

@@ -5,7 +5,10 @@
 #include "septic_tank_operation.h"
 #include "../potty/potty.h"
 
-SepticTank *septic_tank_create(Sewer *sewer, Potty *potty) {
+SepticTank *septic_tank_create(
+    Sewer *sewer,
+    Potty *potty
+) {
     SepticTank *tank = malloc(sizeof(SepticTank));
     tank->data = hashmap_new_with_free(
         (hashmap_free_key_fn) free,
@@ -13,8 +16,17 @@ SepticTank *septic_tank_create(Sewer *sewer, Potty *potty) {
     );
     tank->sewer = sewer;
     tank->potty = potty;
+    tank->aof_enabled = true;
 
     return tank;
+}
+
+void septic_tank_disable_aof(SepticTank *st) {
+    st->aof_enabled = false;
+}
+
+void septic_tank_enable_aof(SepticTank *st) {
+    st->aof_enabled = true;
 }
 
 void septic_tank_destroy(SepticTank *tank) {

@@ -133,6 +133,9 @@ RESPValue process_set(Arena *arena, Server *server, CommandArg **args) {
         return resp_create_null_value(arena);
     }
     
-
-    return resp_create_simple_string_value(arena, "OK");
+    if (result->resolved_mutation != NULL) {
+        return resp_create_simple_string_value(arena, "OK");
+    } else {
+        return resp_create_null_value(arena);
+    }
 }

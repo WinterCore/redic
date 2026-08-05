@@ -12,6 +12,8 @@ typedef struct SepticTank {
 
     Sewer *sewer;
     Potty *potty;
+
+    bool aof_enabled;
 } SepticTank;
 
 /**
@@ -19,6 +21,9 @@ typedef struct SepticTank {
  * The tank owns its internal hashmap; the caller owns `sewer`.
  */
 SepticTank *septic_tank_create(Sewer *sewer, Potty *potty);
+
+void septic_tank_disable_aof(SepticTank *st);
+void septic_tank_enable_aof(SepticTank *st);
 
 /**
  * Frees tank storage and all in-memory key/value entries.

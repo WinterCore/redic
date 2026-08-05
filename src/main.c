@@ -8,12 +8,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <pthread.h>
-
-#include "./resp/resp.h"
-#include "./command/command.h"
 #include "arena.h"
 #include "potty/potty.h"
-#include "ring.h"
 #include "septic_tank/septic_tank.h"
 #include "server.h"
 #include "./aids.h"

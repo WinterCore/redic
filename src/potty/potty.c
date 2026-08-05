@@ -113,7 +113,7 @@ void *potty_pump(void *input) {
     // Poop indefinitely...
     while (1) {
         SewerMessage *message = sewer_timed_consume(potty->sewer, 1000);
-        
+
         if (message != NULL) {
             potty_poop(potty, message->value);
             sewer_message_destroy(message, true);
