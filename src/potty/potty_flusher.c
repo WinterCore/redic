@@ -9,6 +9,7 @@
 #include "potty_serializer.h"
 
 void perform_flush(FlushJob *job) {
+    DEBUG_PRINTF("AOF: Flushing data to disk...\n\tItem count: %zu", hector_size(job->waste));
     FILE *aof = fopen("data.aof", "a");
     
     if (aof == NULL) {

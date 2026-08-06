@@ -1,10 +1,9 @@
 #include <stdint.h>
-#include <string.h>
 
 #include "septic_tank_operation.h"
 #include "septic_tank.h"
 
-SepticTankResult *septic_tank_incrby(SepticTank *tank, Arena *result_arena, SepticTankIncrByOperation *op) {
+SepticTankResult *septic_tank_resolve_incrby(SepticTank *tank, Arena *result_arena, SepticTankIncrByOperation *op) {
     SepticTankResult *result = arena_alloc(result_arena, sizeof(SepticTankResult));
     result->type = SEPTIC_TANK_INCRBY;
     result->resolved_mutation = NULL;
@@ -13,17 +12,17 @@ SepticTankResult *septic_tank_incrby(SepticTank *tank, Arena *result_arena, Sept
     result->incrby_result = (SepticTankIncrByResult) { .value = 0 };
 
     DataEntry *entry = NULL;
-    
+
     hashmap_get(tank->data, op->key->str, op->key->len, (void **) &entry);
 
     int64_t value = 0;
 
     if (entry != NULL && data_is_expired(entry)) {
         entry = NULL;
-        // Will be overwritten below
+        // Treated as absent — the SET mutation below overwrites it
     }
 
-    if (entry != NULL && !data_is_expired(entry)) {
+    if (entry != NULL) {
         if (entry->type != DATA_STRING) {
             result->error = "WRONGTYPE Operation against a key holding the wrong kind of value";
             result->success = false;
@@ -52,24 +51,22 @@ SepticTankResult *septic_tank_incrby(SepticTank *tank, Arena *result_arena, Sept
 
     DataString *string_value = data_string_from_int64(result_arena, value);
 
+    // An existing key keeps its expiry; a missing or expired one starts fresh
     OptionTime expires_at = entry != NULL
         ? entry->expires_at
         : (OptionTime) { .is_present = false };
 
-    entry = data_create_string_entry(expires_at, string_value->len, string_value->str);
-    char *stored_key = malloc(op->key->len);
-    memcpy(stored_key, op->key->str, op->key->len);
-    hashmap_put(tank->data, stored_key, op->key->len, entry);
-
     result->incrby_result.value = value;
+
+    // INCRBY isn't a persisted mutation type — it resolves into the SET it performs
     result->resolved_mutation = arena_alloc(result_arena, sizeof(SepticTankMutation));
     result->resolved_mutation->type = SEPTIC_TANK_SET;
-    result->resolved_mutation->set = (SepticTankSetOperation) {
-        .expiration = entry->expires_at.is_present
-            ? (SepticTankExpiration) { .type = ST_EXPIRATION_UNIX_TS, .ts = entry->expires_at.value }
-            : (SepticTankExpiration) { .type = ST_EXPIRATION_NO_EXPIRE },
+    result->resolved_mutation->set = (SepticTankSetMutation) {
         .key = op->key,
         .value = string_value,
+        .expires_at = expires_at.is_present
+            ? expires_at.value
+            : ST_MUTATION_NO_EXPIRY,
     };
 
     return result;

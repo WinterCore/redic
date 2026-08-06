@@ -90,7 +90,7 @@ Current status: the write path is complete end to end. Startup replay is not imp
   - [ ] Lists (`LPUSH`, `RPUSH`, `LPOP`, `RPOP`, `LRANGE`)
   - [ ] Hashes (`HSET`, `HGET`, `HGETALL`, `HDEL`)
   - [ ] Sets (`SADD`, `SREM`, `SMEMBERS`, `SISMEMBER`)
-- [-] AOF persistence — mutation routing, batched flushing, and fsync'd appends to `data.aof` are done; still need startup replay, torn-tail recovery, flush-on-shutdown, and compaction
+- [ ] AOF persistence — mutation routing, batched flushing, and fsync'd appends to `data.aof` are done; still need startup replay, torn-tail recovery, flush-on-shutdown, and compaction
 - [ ] Replication — replica handshake (`PING` → `REPLCONF` → `PSYNC`), full resync on connect, partial resync via replication backlog after reconnect
 - [ ] Transactions — `MULTI` / `EXEC` / `DISCARD` with `WATCH` for optimistic locking
 - [ ] Pub/Sub — `SUBSCRIBE` / `PUBLISH` / `UNSUBSCRIBE` with fan-out to blocking subscribers

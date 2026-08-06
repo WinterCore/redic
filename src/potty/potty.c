@@ -6,7 +6,7 @@
 #include "potty.h"
 #include "potty_flusher.h"
 
-#define FLUSH_TIMEOUT 5000
+#define FLUSH_TIMEOUT 1000
 #define FLUSH_ITEMS_THRESHOLD 500
 
 Potty *potty_create(Sewer *sewer) {

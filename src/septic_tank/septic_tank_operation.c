@@ -2,13 +2,6 @@
 #include <string.h>
 #include "septic_tank_operation.h"
 
-bool septic_tank_operation_is_mutation(SepticTankOperationType type) {
-    return type == SEPTIC_TANK_SET
-        || type == SEPTIC_TANK_DEL
-        || type == SEPTIC_TANK_EXPIRE
-        || type == SEPTIC_TANK_INCRBY;
-}
-
 static SepticTankOperation *clone_operation(Arena *arena, SepticTankOperation *operation) {
     SepticTankOperation *cloned_operation = arena_alloc(arena, sizeof(SepticTankOperation));
 

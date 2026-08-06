@@ -134,6 +134,13 @@ int main(int argc, char **argv) {
     Potty *potty = potty_create(server.potty_sewer);
     SepticTank *tank = septic_tank_create(server.septic_tank_sewer, potty);
     septic_tank_launch(tank);
+
+    DEBUG_PRINTF("Replaying AOF file from disk...");
+    // Disable AOF so that our replay data doesn't end up in the same file we're trying to replay and cause corruption and duplicate entries
+    septic_tank_disable_aof(tank);
+
+    // TODO: Replay AOF
+
     potty_launch(potty);
 
     while (1) {

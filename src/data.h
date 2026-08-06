@@ -23,6 +23,11 @@ typedef struct DataString {
     char str[];
 } DataString;
 
+/**
+ * Current wall-clock time in unix milliseconds — the unit every expiry is stored in.
+ */
+int64_t data_now_ms(void);
+
 bool data_is_expired(DataEntry *entry);
 
 DataEntry *data_create_string_entry(

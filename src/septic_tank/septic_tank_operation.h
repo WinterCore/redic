@@ -72,11 +72,6 @@ typedef enum SepticTankOperationType {
     SEPTIC_TANK_EXISTS,
 } SepticTankOperationType;
 
-/**
- * Returns true when operation type represents a persisted mutation (SET/DEL).
- */
-bool septic_tank_operation_is_mutation(SepticTankOperationType type);
-
 typedef struct SepticTankOperation {
     // Used for allocating memory for values that will be passed
     // back
@@ -94,13 +89,41 @@ typedef struct SepticTankOperation {
     };
 } SepticTankOperation;
 
+/*
+ * Mutations are statements of fact about what the store should hold, where the
+ * operations above are statements of intent. They carry none of the condition
+ * flags (nx/xx/get/condition) because those are resolved away before a mutation
+ * exists — that's what lets the AOF replay path apply one directly, and what
+ * keeps them out of the file format.
+ *
+ * The field layout matches the AOF record layout one for one.
+ */
+
+// Stored in a mutation's expires_at when the key has no expiry
+#define ST_MUTATION_NO_EXPIRY ((int64_t) -1)
+
+typedef struct SepticTankSetMutation {
+    DataString *key;
+    DataString *value;
+    int64_t expires_at; // absolute unix ms, or ST_MUTATION_NO_EXPIRY
+} SepticTankSetMutation;
+
+typedef struct SepticTankDelMutation {
+    DataString *key;
+} SepticTankDelMutation;
+
+typedef struct SepticTankExpireMutation {
+    DataString *key;
+    int64_t expires_at; // absolute unix ms; an expiry already in the past resolves to a DEL
+} SepticTankExpireMutation;
+
 typedef struct SepticTankMutation {
     SepticTankOperationType type;
 
     union {
-        SepticTankSetOperation set;
-        SepticTankDelOperation del;
-        SepticTankExpireOperation expire;
+        SepticTankSetMutation set;
+        SepticTankDelMutation del;
+        SepticTankExpireMutation expire;
     };
 } SepticTankMutation;
 
@@ -161,10 +184,17 @@ SepticTankResult *septic_tank_feed(
     SepticTankOperation *operation
 );
 
-/**
- * Executes SET semantics against the tank and returns a typed result.
+/*
+ * The resolve_* functions read the tank and compute a result plus, when the
+ * operation changes state, a `resolved_mutation` describing that change.
+ * They never write it — septic_tank_apply_mutation does. They may still evict
+ * expired entries, which is cache hygiene rather than a logged change.
  */
-SepticTankResult *septic_tank_set(SepticTank *tank, Arena *result_arena, SepticTankSetOperation *op);
+
+/**
+ * Resolves SET semantics against the tank and returns a typed result.
+ */
+SepticTankResult *septic_tank_resolve_set(SepticTank *tank, Arena *result_arena, SepticTankSetOperation *op);
 
 /**
  * Executes GET semantics against the tank and returns a typed result.
@@ -172,9 +202,9 @@ SepticTankResult *septic_tank_set(SepticTank *tank, Arena *result_arena, SepticT
 SepticTankResult *septic_tank_get(SepticTank *tank, Arena *result_arena, SepticTankGetOperation *op);
 
 /**
- * Executes DEL semantics against the tank and returns a typed result.
+ * Resolves DEL semantics against the tank and returns a typed result.
  */
-SepticTankResult *septic_tank_del(SepticTank *tank, Arena *result_arena, SepticTankDelOperation *op);
+SepticTankResult *septic_tank_resolve_del(SepticTank *tank, Arena *result_arena, SepticTankDelOperation *op);
 
 /**
  * Executes TTL semantics against the tank and returns a typed result.
@@ -187,14 +217,27 @@ SepticTankResult *septic_tank_ttl(SepticTank *tank, Arena *result_arena, SepticT
 SepticTankResult *septic_tank_exists(SepticTank *tank, Arena *result_arena, SepticTankExistsOperation *op);
 
 /**
- * Executes EXPIRE semantics against the tank and returns a typed result.
+ * Resolves EXPIRE semantics against the tank and returns a typed result.
+ * An expiry that already lies in the past resolves into a DEL mutation.
  */
-SepticTankResult *septic_tank_expire(SepticTank *tank, Arena *result_arena, SepticTankExpireOperation *op);
+SepticTankResult *septic_tank_resolve_expire(SepticTank *tank, Arena *result_arena, SepticTankExpireOperation *op);
 
 /**
- * Executes INCR/DECR/INCRBY/DECRBY semantics (signed delta) and returns a typed result.
+ * Resolves INCR/DECR/INCRBY/DECRBY semantics (signed delta) and returns a typed result.
+ * Always resolves into a SET mutation — INCRBY is never persisted as itself.
  */
-SepticTankResult *septic_tank_incrby(SepticTank *tank, Arena *result_arena, SepticTankIncrByOperation *op);
+SepticTankResult *septic_tank_resolve_incrby(SepticTank *tank, Arena *result_arena, SepticTankIncrByOperation *op);
+
+/*
+ * The apply_* functions are the write half — the only code that touches the
+ * tank's storage. Each lives beside the resolve_* it belongs to. They read only
+ * mutation fields, never intent, which is what lets AOF replay call them.
+ * INCRBY has none: it resolves into a SET.
+ */
+
+void septic_tank_apply_set(SepticTank *tank, SepticTankSetMutation *set);
+void septic_tank_apply_del(SepticTank *tank, SepticTankDelMutation *del);
+void septic_tank_apply_expire(SepticTank *tank, SepticTankExpireMutation *expire);
 
 /**
  * Deep-clones a mutation payload into `arena` for async persistence/replay paths.

@@ -1,24 +1,40 @@
-import { connect } from "@db/redis";
 import { assertEquals, assertExists, assertStringIncludes } from "@std/assert";
+import { afterAll, beforeAll, describe, it } from "@std/testing/bdd";
+import {
+  connectTo,
+  type RunningRedic,
+  startRedic,
+  stopRedicAndClean,
+} from "./helpers/redic.ts";
 
-async function makeRedis() {
-  return await connect({ hostname: "127.0.0.1", port: 6969 });
-}
+describe("server commands", () => {
+  let server: RunningRedic;
 
-Deno.test("ping - returns PONG", async () => {
-  const redis = await makeRedis();
+  beforeAll(async () => {
+    server = await startRedic();
+  });
 
-  assertEquals(await redis.ping(), "PONG");
+  afterAll(async () => {
+    await stopRedicAndClean(server);
+  });
 
-  redis.close();
-});
+  const makeRedis = () => connectTo(server);
 
-Deno.test("info - returns replication info", async () => {
-  const redis = await makeRedis();
+  it("ping - returns PONG", async () => {
+    const redis = await makeRedis();
 
-  const info = await redis.info();
-  assertExists(info);
-  assertStringIncludes(info, "role:master");
+    assertEquals(await redis.ping(), "PONG");
 
-  redis.close();
+    redis.close();
+  });
+
+  it("info - returns replication info", async () => {
+    const redis = await makeRedis();
+
+    const info = await redis.info();
+    assertExists(info);
+    assertStringIncludes(info, "role:master");
+
+    redis.close();
+  });
 });

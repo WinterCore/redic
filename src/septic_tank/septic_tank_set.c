@@ -5,9 +5,9 @@
 #include "septic_tank_operation.h"
 #include "../data.h"
 
-SepticTankResult *septic_tank_set(SepticTank *tank, Arena *result_arena, SepticTankSetOperation *op) {
+SepticTankResult *septic_tank_resolve_set(SepticTank *tank, Arena *result_arena, SepticTankSetOperation *op) {
     DataEntry *old_entry = NULL;
-    
+
     SepticTankResult *result = arena_alloc(result_arena, sizeof(SepticTankResult));
     result->type = SEPTIC_TANK_SET;
     result->set_result = (SepticTankSetResult) { .old_value = NULL };
@@ -50,7 +50,7 @@ SepticTankResult *septic_tank_set(SepticTank *tank, Arena *result_arena, SepticT
         hashmap_remove(tank->data, op->key->str, op->key->len);
         old_entry = NULL;
     }
-    
+
     OptionTime expires_at;
 
     switch (op->expiration.type) {
@@ -70,37 +70,38 @@ SepticTankResult *septic_tank_set(SepticTank *tank, Arena *result_arena, SepticT
             break;
     }
 
-    // Snapshot old value before hashmap_put auto-frees the old entry
     if (op->get && old_entry != NULL) {
         DataString *old_value = data_unwrap_string(old_entry);
         result->set_result.old_value = data_copy_string_arena(result_arena, old_value);
     }
 
-    DataEntry *entry = data_create_string_entry(expires_at, op->value->len, op->value->str);
-    char *stored_key = malloc(op->key->len);
-    memcpy(stored_key, op->key->str, op->key->len);
-    hashmap_put(tank->data, stored_key, op->key->len, entry);
     result->resolved_mutation = arena_alloc(result_arena, sizeof(SepticTankMutation));
     result->resolved_mutation->type = SEPTIC_TANK_SET;
-    result->resolved_mutation->set = (SepticTankSetOperation) {
+    result->resolved_mutation->set = (SepticTankSetMutation) {
         .key = op->key,
         .value = op->value,
-        .nx = op->nx,
-        .xx = op->xx,
-        .get = op->get,
+        .expires_at = expires_at.is_present
+            ? expires_at.value
+            : ST_MUTATION_NO_EXPIRY,
     };
 
-    if (expires_at.is_present) {
-        result->resolved_mutation->set.expiration = (SepticTankExpiration) {
-            .type = ST_EXPIRATION_UNIX_TS,
-            .ts = expires_at.value,
-        };
-    } else {
-        result->resolved_mutation->set.expiration = (SepticTankExpiration) {
-            .type = ST_EXPIRATION_NO_EXPIRE,
-            .ts = -1,
-        };
-    }
-
     return result;
+}
+
+void septic_tank_apply_set(SepticTank *tank, SepticTankSetMutation *set) {
+    OptionTime expires_at = set->expires_at == ST_MUTATION_NO_EXPIRY
+        ? (OptionTime) { .is_present = false }
+        : (OptionTime) { .is_present = true, .value = set->expires_at };
+
+    DataEntry *entry = data_create_string_entry(
+        expires_at,
+        set->value->len,
+        set->value->str
+    );
+
+    // The map owns its keys and frees them via its free_key_fn
+    char *stored_key = malloc(set->key->len);
+    memcpy(stored_key, set->key->str, set->key->len);
+
+    hashmap_put(tank->data, stored_key, set->key->len, entry);
 }

@@ -21,10 +21,9 @@
  *   DEL    : [u8 tag][str key]
  *   EXPIRE : [u8 tag][str key][i64 expires_at]
  *
- * Only the SET expiration *timestamp* is persisted, not its
- * SepticTankExpiration.type. The tank resolves the type away before the
- * mutation reaches us: KEEP_OLD is already collapsed, and NO_EXPIRE is
- * written as -1 (see septic_tank_set.c).
+ * A SET's expiry is an absolute unix ms timestamp, or ST_MUTATION_NO_EXPIRY
+ * (-1) when the key has none. The tank resolves KEEP_OLD away long before a
+ * mutation exists, so the record layout is exactly SepticTankSetMutation.
  */
 
 /**

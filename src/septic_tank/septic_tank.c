@@ -44,11 +44,11 @@ void septic_tank_digest(SepticTank *tank, SewerMessage *message) {
             break;
         }
         case SEPTIC_TANK_SET: {
-            result = septic_tank_set(tank, operation->response_arena, &operation->set);
+            result = septic_tank_resolve_set(tank, operation->response_arena, &operation->set);
             break;
         }
         case SEPTIC_TANK_DEL: {
-            result = septic_tank_del(tank, operation->response_arena, &operation->del);
+            result = septic_tank_resolve_del(tank, operation->response_arena, &operation->del);
             break;
         }
         case SEPTIC_TANK_TTL: {
@@ -60,11 +60,11 @@ void septic_tank_digest(SepticTank *tank, SewerMessage *message) {
             break;
         }
         case SEPTIC_TANK_EXPIRE: {
-            result = septic_tank_expire(tank, operation->response_arena, &operation->expire);
+            result = septic_tank_resolve_expire(tank, operation->response_arena, &operation->expire);
             break;
         }
         case SEPTIC_TANK_INCRBY: {
-            result = septic_tank_incrby(tank, operation->response_arena, &operation->incrby);
+            result = septic_tank_resolve_incrby(tank, operation->response_arena, &operation->incrby);
             break;
         }
         default:
@@ -72,6 +72,11 @@ void septic_tank_digest(SepticTank *tank, SewerMessage *message) {
     }
 
     bool succeeded = result->success;
+
+    // Resolve computed what should change; this is where it actually happens
+    if (succeeded && result->resolved_mutation != NULL) {
+        septic_tank_apply_mutation(tank, result->resolved_mutation);
+    }
 
     if (message->clogged_sewer) {
         SewerMessage *response_message = sewer_message_create(operation->response_arena, result, false);
@@ -82,7 +87,7 @@ void septic_tank_digest(SepticTank *tank, SewerMessage *message) {
         response_message->is_consumed = true;
     }
 
-    if (succeeded && result->resolved_mutation != NULL) {
+    if (tank->aof_enabled && succeeded && result->resolved_mutation != NULL) {
         SepticTankMutation *mutation = result->resolved_mutation;
 
         potty_feed(tank->potty, mutation);

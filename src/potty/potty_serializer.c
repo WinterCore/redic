@@ -24,7 +24,7 @@ size_t get_mutation_size(SepticTankMutation *mutation) {
         case SEPTIC_TANK_SET:
             return (
                 1                                   + // Type
-                sizeof(mutation->set.expiration.ts) + // Expiration
+                sizeof(mutation->set.expires_at)    + // Expiration
 
                 sizeof(mutation->set.key->len)      + // Key Length
                 mutation->set.key->len              + // Key
@@ -83,7 +83,7 @@ void potty_serialize_mutation(FILE *file, SepticTankMutation *mutation) {
     switch (mutation->type) {
         case SEPTIC_TANK_SET: {
             // Expiration
-            fwrite_int64(file, &mutation->set.expiration.ts);
+            fwrite_int64(file, &mutation->set.expires_at);
 
             // Key
             fwrite_string(file, mutation->set.key);

@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include "../hashmap.h"
 #include "../sewer.h"
+#include "septic_tank_operation.h"
 
 typedef struct Potty Potty;
 
@@ -35,5 +36,19 @@ void septic_tank_destroy(SepticTank *tank);
  * Returns the created thread id.
  */
 pthread_t septic_tank_launch(SepticTank *tank);
+
+/**
+ * Applies a resolved mutation to the tank's storage. The only writer.
+ * Reads none of the intent fields (nx/xx/get/condition), which is what lets the
+ * AOF replay path reuse it without persisting them.
+ */
+void septic_tank_apply_mutation(SepticTank *tank, SepticTankMutation *mutation);
+
+/**
+ * Used for replaying AOF mutations
+ * WARN: Not thread safe, only call upon initiatlization, for multithreading use
+ * the septic tank sewer instead
+ */
+void septic_tank_replay_mutation(SepticTank *tank, SepticTankMutation *mutation);
 
 #endif
