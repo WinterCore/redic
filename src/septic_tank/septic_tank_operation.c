@@ -83,3 +83,37 @@ SepticTankMutation *septic_tank_mutation_clone(Arena *arena, SepticTankMutation 
 
     return clone;
 }
+
+void septic_tank_debug_mutation(SepticTankMutation *mutation) {
+    switch (mutation->type) {
+        case SEPTIC_TANK_SET:
+            DEBUG_PRINTF(
+                "SET { key = \"%.*s\", value = \"%.*s\", expires_at = %" PRId64 " }\n",
+                (int) mutation->set.key->len, mutation->set.key->str,
+                (int) mutation->set.value->len, mutation->set.value->str,
+                mutation->set.expires_at
+            );
+            break;
+        case SEPTIC_TANK_DEL:
+            DEBUG_PRINTF(
+                "DEL { key = \"%.*s\" }\n",
+                (int) mutation->del.key->len, mutation->del.key->str
+            );
+            break;
+        case SEPTIC_TANK_EXPIRE:
+            DEBUG_PRINTF(
+                "EXPIRE { key = \"%.*s\", expires_at = %" PRId64 " }\n",
+                (int) mutation->expire.key->len, mutation->expire.key->str,
+                mutation->expire.expires_at
+            );
+            break;
+        case SEPTIC_TANK_GET:
+        case SEPTIC_TANK_TTL:
+        case SEPTIC_TANK_EXISTS:
+        case SEPTIC_TANK_INCRBY:
+            // Printed rather than UNREACHABLE'd — a mutation carrying a
+            // non-mutation type is exactly what you'd call this to find out
+            DEBUG_PRINTF("<invalid mutation type %d>\n", mutation->type);
+            break;
+    }
+}

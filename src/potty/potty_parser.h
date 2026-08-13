@@ -18,6 +18,7 @@ PottyParser potty_parser_create(Arena *arena, FILE *file);
 
 
 typedef enum PottyParserReadResult: uint8_t {
+    POTTY_PARSER_OK,
     POTTY_PARSER_EOF,
     POTTY_PARSER_UNEXPECTED_EOF,
     POTTY_PARSER_READ_ERROR,

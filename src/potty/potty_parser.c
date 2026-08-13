@@ -69,12 +69,16 @@ PottyParserReadResult potty_parser_read(
             fread_string(parser->arena, parser->file, &set->key, true);
             // Value
             fread_string(parser->arena, parser->file, &set->value, true);
+
+            break;
         }
         case SEPTIC_TANK_DEL: {
             SepticTankDelMutation *del = &out_mutation->del;
             
             // Key
             fread_string(parser->arena, parser->file, &del->key, true);
+
+            break;
         }
         case SEPTIC_TANK_EXPIRE: {
             SepticTankExpireMutation *expire = &out_mutation->expire;
@@ -83,6 +87,8 @@ PottyParserReadResult potty_parser_read(
             fread_string(parser->arena, parser->file, &expire->key, true);
             // Expiration
             fread_int64(parser->file, &expire->expires_at, true);
+
+            break;
         }
 
         case SEPTIC_TANK_GET:
@@ -94,4 +100,6 @@ PottyParserReadResult potty_parser_read(
             UNREACHABLE();
             break;
     }
+
+    return POTTY_PARSER_OK;
 }

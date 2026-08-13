@@ -1,22 +1,29 @@
 #include <stdio.h>
+#include <errno.h>
 
-#include "./potty_trainer.h"
-#include "../aids.h"
 #include "potty_parser.h"
+#include "potty_trainer.h"
+#include "../aids.h"
 
 
 PottyTrainer potty_trainer_create(SepticTank *septic_tank) {
     PottyTrainer trainer = {
-        .septic_tank = septic_tank
+        .septic_tank = septic_tank,
+        .num_commands_processed = 0,
     };
 
     return trainer;
 }
 
 bool potty_trainer_train(PottyTrainer *potty_trainer) {
-    FILE *aof = fopen("data.aof", "a");
+    FILE *aof = fopen("data.aof", "r");
     
     if (aof == NULL) {
+        if (errno == ENOENT) {
+            DEBUG_PRINTF("AOF file not found...");
+            return true;
+        }
+
         PANIC("Failed to open AOF!");
     }
 
@@ -40,7 +47,9 @@ bool potty_trainer_train(PottyTrainer *potty_trainer) {
             PANIC("Unexpected AOF EOF");
         }
 
+        potty_trainer->num_commands_processed += 1;
         septic_tank_apply_mutation(potty_trainer->septic_tank, &mutation);
+        septic_tank_debug_mutation(&mutation);
 
         arena_reset(arena);
     }

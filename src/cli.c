@@ -31,14 +31,16 @@ bool cli_parse_opts(
         for (size_t j = opt_idx; j < iargs_len; j += 1) {
             char *arg = iargs[j];
 
-            if (
-                // Long notation
-                (strncmp(arg, "--", 2) == 0 && strcmp(def->name, &arg[2]) == 0)
+            // Long notation
+            bool is_long = strncmp(arg, "--", 2) == 0
+                && strcmp(def->name, &arg[2]) == 0;
 
-                ||
-                // Short notation
-                (strncmp(arg, "-", 1) == 0 && strcmp(def->name, &arg[1]) == 0)
-            ) {
+            bool is_short = def->shorthand != NULL
+                && arg[0] == '-'
+                && arg[1] != '-'
+                && strcmp(def->shorthand, &arg[1]) == 0;
+
+            if (is_long || is_short) {
                 matched_idx = j;
                 break;
             }
@@ -77,7 +79,7 @@ bool cli_parse_opts(
         
         switch (def->type) {
             case CLI_BOOL: {
-                bool TRUE = true;
+                static bool TRUE = true;
                 *value = &TRUE;
 
                 break;
@@ -122,8 +124,10 @@ bool cli_parse_opts(
         }
         
         // Move the args we just consumed to the beginning
-        for (size_t j = matched_idx; j < consumed_args; j += 1, opt_idx += 1) {
-            iargs[opt_idx] = iargs[j];
+        for (size_t j = 0; j < consumed_args; j += 1, opt_idx += 1) {
+            char *consumed = iargs[matched_idx + j];
+            iargs[matched_idx + j] = iargs[opt_idx];
+            iargs[opt_idx] = consumed;
         }
     }
 

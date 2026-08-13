@@ -9,6 +9,7 @@
 
 typedef struct PottyTrainer {
     SepticTank *septic_tank;
+    size_t num_commands_processed;
 } PottyTrainer;
 
 PottyTrainer potty_trainer_create(SepticTank *septic_tank);

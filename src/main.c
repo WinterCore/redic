@@ -10,6 +10,7 @@
 #include <pthread.h>
 #include "arena.h"
 #include "potty/potty.h"
+#include "potty/potty_trainer.h"
 #include "septic_tank/septic_tank.h"
 #include "server.h"
 #include "./aids.h"
@@ -135,11 +136,13 @@ int main(int argc, char **argv) {
     SepticTank *tank = septic_tank_create(server.septic_tank_sewer, potty);
     septic_tank_launch(tank);
 
-    DEBUG_PRINTF("Replaying AOF file from disk...");
-    // Disable AOF so that our replay data doesn't end up in the same file we're trying to replay and cause corruption and duplicate entries
+    DEBUG_PRINTF("Replaying AOF file from disk...\n");
+    // AOF Replay: Disable AOF so that our replay data doesn't end up in the same file we're trying to replay and cause corruption and duplicate entries
     septic_tank_disable_aof(tank);
-
-    // TODO: Replay AOF
+    PottyTrainer potty_trainer = potty_trainer_create(tank);
+    potty_trainer_train(&potty_trainer);
+    septic_tank_enable_aof(tank);
+    DEBUG_PRINTF("Replayed AOF successfully!...\n\tCommands processed: %zu\n", potty_trainer.num_commands_processed);
 
     potty_launch(potty);
 

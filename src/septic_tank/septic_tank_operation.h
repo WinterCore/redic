@@ -244,4 +244,10 @@ void septic_tank_apply_expire(SepticTank *tank, SepticTankExpireMutation *expire
  */
 SepticTankMutation *septic_tank_mutation_clone(Arena *arena, SepticTankMutation *mutation);
 
+/**
+ * Prints a mutation on one DEBUG_PRINTF line. Compiled out of release builds
+ * along with the rest of DEBUG_PRINTF.
+ */
+void septic_tank_debug_mutation(SepticTankMutation *mutation);
+
 #endif
