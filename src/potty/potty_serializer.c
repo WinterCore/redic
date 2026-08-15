@@ -53,6 +53,10 @@ static void fwrite_string(FILE *file, DataString *str) {
         PANIC("fwrite_string failed");
     }
 
+    if (len == 0) {
+        return;
+    }
+
     items = fwrite(str->str, len, 1, file);
 
     if (items != 1) {

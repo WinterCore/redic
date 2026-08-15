@@ -52,6 +52,7 @@ void *handle_client_socket(void *_handler_input) {
         RESPValue value = {0};
 
         RESPParseResult result = resp_parse_input(arena, buffer, &value);
+        UNUSED(result);
 
         /*
         resp_print_parse_result(&result);
